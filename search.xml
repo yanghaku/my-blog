@@ -3,7 +3,7 @@
   <entry>
     <title>Android入门知识</title>
     <url>/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/</url>
-    <content><![CDATA[<p>想学习Android的第一步，就应该先了解这个平台系统的大体架构，应用的基础知识等，可是我看到很多入门教程第一步就是直接讲环境搭建下jdk什么的，这种太片面了，往后的NDK，安全沙盒什么的看了也很迷茫。所以我自己查找了许多资料并总结了一下。<br>主要有：<br>Android平台架构</p>
+    <content><![CDATA[<p>想学习Android的第一步，就应该先了解这个平台系统的大体架构，应用的基础知识等，可是我看到很多入门教程第一步就是直接讲环境搭建下jdk什么的，这种太片面了，往后的NDK，安全沙盒什么的看了也很迷茫。所以我自己查找了许多资料并总结了一下。<br>主要有：<br>Android平台架构<br>Android Application 基础知识<br>    安全沙盒与最小权限原则<br>    Android四大组件（重点）<br>    组件启动与组件之间联系<br>    应用的清单文件<br>    应用资源<br>Android SDK 目录结构及作用<br>开发环境搭建</p>
 <hr/>
 
 <a id="more"></a>
