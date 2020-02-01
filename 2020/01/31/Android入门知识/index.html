@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/font-awesome@4/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://yanghaku.github.io').hostname,
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":true,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: true,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="想学习Android的第一步，就应该先了解这个平台系统的大体架构，应用的基础知识等，可是我看到很多入门教程第一步就是直接讲环境搭建下jdk什么的，这种太片面了，往后的NDK，安全沙盒什么的看了也很迷茫。所以我自己查找了许多资料并总结了一下。主要有：Android平台架构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android入门知识">
+<meta property="og:url" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/index.html">
+<meta property="og:site_name" content="YangBo">
+<meta property="og:description" content="想学习Android的第一步，就应该先了解这个平台系统的大体架构，应用的基础知识等，可是我看到很多入门教程第一步就是直接讲环境搭建下jdk什么的，这种太片面了，往后的NDK，安全沙盒什么的看了也很迷茫。所以我自己查找了许多资料并总结了一下。主要有：Android平台架构">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/android-stack_2x.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/2.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/3.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/intent.webp">
+<meta property="og:image" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/intent1.jpg">
+<meta property="og:image" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/6.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/7.png">
+<meta property="article:published_time" content="2020-01-31T03:19:00.000Z">
+<meta property="article:modified_time" content="2020-02-01T07:24:21.803Z">
+<meta property="article:author" content="杨博">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/android-stack_2x.png">
+
+<link rel="canonical" href="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Android入门知识 | YangBo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="YangBo" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">YangBo</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">奋斗才能拥有最美丽的人生</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">6</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">5</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">7</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yanghaku" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="杨博">
+      <meta itemprop="description" content="一个快废掉的咸鱼罢了">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangBo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android入门知识
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-31 11:19:00" itemprop="dateCreated datePublished" datetime="2020-01-31T11:19:00+08:00">2020-01-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-02-01 15:24:21" itemprop="dateModified" datetime="2020-02-01T15:24:21+08:00">2020-02-01</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index">
+                    <span itemprop="name">Android学习</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>想学习Android的第一步，就应该先了解这个平台系统的大体架构，应用的基础知识等，可是我看到很多入门教程第一步就是直接讲环境搭建下jdk什么的，这种太片面了，往后的NDK，安全沙盒什么的看了也很迷茫。所以我自己查找了许多资料并总结了一下。<br>主要有：<br>Android平台架构</p>
+<hr/>
+
+<a id="more"></a>
+
+<h2 id="Android平台架构"><a href="#Android平台架构" class="headerlink" title="Android平台架构"></a>Android平台架构</h2><p>Android 是一个<strong>基于linux内核的开源软件栈</strong>，通过软件叠层的方式构建出来的一个操作系统。</p>
+<p>平台的架构图（来自官网）：<br><img src="android-stack_2x.png" alt="android-stack_2x.png"></p>
+<p>从下到上分为五层： Linux内核层，HAL硬件抽象层，Library层，Framework层，Application应用层。</p>
+<h3 id="Linux内核层"><a href="#Linux内核层" class="headerlink" title="Linux内核层"></a>Linux内核层</h3><p>Android平台的基础是Linux内核，主要用linux内核执行一些底层的功能，比如线程和底层的内存管理，还有各种设备的驱动，直接和硬件打交道。linux内核的安全性也能保证这Android的安全。</p>
+<h3 id="HAL硬件抽象层"><a href="#HAL硬件抽象层" class="headerlink" title="HAL硬件抽象层"></a>HAL硬件抽象层</h3><p>HAL提供了一个标准的界面，向更高级别的javaAPI框架显示设备的硬件功能。每一个硬件组件都是对应着一个库模块，比如相机模块，蓝牙模块，音频模块等。当javaAPI框架需要访问硬件的时候，Android会为这些硬件加载对应的库模块。其实就是对底层硬件驱动的一种封装，让javaAPI框架层只看到一个标准的接口，而有了硬件的无关性。</p>
+<h3 id="Libarary层"><a href="#Libarary层" class="headerlink" title="Libarary层"></a>Libarary层</h3><p>系统的运行库层，这层主要提供了一些必不可少的运行库。</p>
+<h4 id="Android-Runtime"><a href="#Android-Runtime" class="headerlink" title="Android Runtime"></a>Android Runtime</h4><p>Android Runtime 包括两部分，一部分是核心运行时库，为javaAPI框架提供java语言中的大部分功能；另一部分是Android运行时。</p>
+<p>在Android 5.0 之前，Android运行时都是Dalvik虚拟机。Dalvik虚拟机相当于一个适配于移动设备更优化的一个java虚拟机（JVM）,也是用JIT编译器来解释运行字节码。<br>Dalvik运行的是<code>.dex</code>格式的字节码，是构建的时候将<code>.java</code>源码编译成 <code>.class</code>字节码，然后再压缩优化成<code>.dex</code>的字节码。</p>
+<blockquote>
+<p>这个Dalvik可以与java虚拟机对比理解<br>首先就是Dalvik本身就是一个魔改的java虚拟机，是一种基于寄存器的架构，虽然牺牲了一些平台无关性，但是在代码运行效率方面都比jvm更胜一筹。<br>JVM与Dalvik区别：</p>
+<ul>
+<li>运行的字节码不同，指令集架构不同，JVM基于栈，Dalvik基于寄存器</li>
+<li>JVM只运行一个实例，所有的应用都运行在同一个虚拟机中，而Dalvik是每一个应用启动都有一个单独的Dalvik虚拟机对应，每一个Dalvik都对应linux里的一个进程。这样就算其中一个应用crash掉了，也不会影响其他的应用。</li>
+</ul>
+</blockquote>
+<p>到了Android 5.0版本之后，这一部分就变成了Android Runtime（ART），ART与Dalvik相比，增加了更多的功能：</p>
+<ul>
+<li>不仅有JIT，而且还增加了AOT（预先编译）</li>
+<li>优化垃圾回收</li>
+<li>更好的调试支持</li>
+</ul>
+<p>预先编译是在安装的时候将 .dex 文件编译成机器码（所以安装的时间会变慢很多），运行的时候跳过了解释的阶段，运行效率之类的都显著提高，但是占用的存储空间就大了，也就相当于用空间来换时间。这样使CPU的利用率也降低不少，能够提升电池的续航时间。</p>
+<p>总之，Android Runtime安卓运行时就是用来运行apk里的.dex代码的。<br>一个APP对应一个ART实例，并且对应于一个进程。</p>
+<h4 id="Native-C-C-Libarary"><a href="#Native-C-C-Libarary" class="headerlink" title="Native C/C++ Libarary"></a>Native C/C++ Libarary</h4><p>原生C/C++库，通过一些c/c++库为安卓系统提供了一些主要的特性支持。比如OpenGL库提供3D绘图，SQLite库提供数据库支持，WebKit库提供浏览器内核支持…. 这些主要是一些关键的东西（效率至上），所以是用C/C++的库来提供支持。</p>
+<p>应用不仅可以调用javaAPI层来访问这里面的模块，而且可以直接调用这些原生库的功能（一般都是在c/c++原生开发的时候）。</p>
+<blockquote>
+<p>NDK: native develop kit 原生开发工具包<br>当c/c++ 原生开发的时候用到的工具包，其实对大部分的应用都没有很大的价值，因为这不可避免地增加了开发的复杂度。一般在以下场景才会用到：</p>
+<ul>
+<li>为了非常好的性能。例如游戏，物理模拟这些计算密集型的应用</li>
+<li>重复使用自己或者其他开发者已经开发好的c/c++库</li>
+<li>在平台之间移植应用</li>
+</ul>
+</blockquote>
+<h3 id="JAVA-API-Framework"><a href="#JAVA-API-Framework" class="headerlink" title="JAVA API Framework"></a>JAVA API Framework</h3><p>java API框架，这层主要是用java写的API，包含了Android OS的整个功能集（也就是说开发的时候可以调用这里面的API就可以实现所有功能）。里面包括着各种系统的服务和四大组件（后面会介绍到）。</p>
+<h3 id="System-Application-和-Application"><a href="#System-Application-和-Application" class="headerlink" title="System Application 和 Application"></a>System Application 和 Application</h3><p>系统应用可以说是系统内置的应用，这些对于开发者而言，可以像调用java API Framework一样来调用这些System Application。<br>Application就是我们自己写的第三方的应用这种了，是在最上层。</p>
+<p>总之，Android APP的开发语言最好还是官方的JAVA/Kotlin，如果有特殊的需要才会用到native c/c++.<br>对于应用开发人员主要研究的就是架构里面的Java API Framework层和System Application层。如果有需要还会用到native c/c++ Library。就像Android运行时和运行库和下层的驱动等，不是研究的重点，在把握全局的同时，也要搞清楚重点。</p>
+<h2 id="Android-Application-基础知识"><a href="#Android-Application-基础知识" class="headerlink" title="Android Application 基础知识"></a><strong>Android Application 基础知识</strong></h2><p>一个APK文件，包含一个Android应用的所有内容。使用Kotlin，Java，c++编写Android应用，Android SDK会将代码连同数据和资源文件编译成一个APK（Android Package），即带有<code>.apk</code>后缀的归档文件。</p>
+<h3 id="安全沙盒与最小权限原则"><a href="#安全沙盒与最小权限原则" class="headerlink" title="安全沙盒与最小权限原则"></a>安全沙盒与最小权限原则</h3><h4 id="安全沙盒-security-sandbox"><a href="#安全沙盒-security-sandbox" class="headerlink" title="安全沙盒 security sandbox"></a>安全沙盒 security sandbox</h4><blockquote>
+<p>沙箱(盒)是为执行中的程序提供隔离环境的一种安全机制。它通过严格控制执行的程序锁访问的资源，以确保系统的安全。<br>每一个Android应用都处于各自的安全沙盒里面，它们直接不能互相访问文件等。</p>
+</blockquote>
+<ul>
+<li>Android操作系统首先是多用户的Linux系统，对于每一个应用都是一个不同的用户。</li>
+<li>默认情况下，系统会为每一个应用分配一个唯一的用户ID，系统为应用中的所有文件设置权限，使得有权限的用户才能访问对应的文件。</li>
+<li>每个进程都拥有一个独立的虚拟机，默认情况下，每个应用都在其自己对应的Linux进程上执行（应用-虚拟机-Linux进程 这三个是一对一的关系）</li>
+</ul>
+<h4 id="最小权限原则"><a href="#最小权限原则" class="headerlink" title="最小权限原则"></a>最小权限原则</h4><p>对于每一个应用，也就是对应的一个唯一的Linux用户，默认情况下只能访问其工作所需要的组件。在此环境中，应用无法访问其未获得权限的系统部分。<br>应用要想访问其他应用的共享数据或者系统服务，有两个途径：</p>
+<ul>
+<li>让两个应用共享一个Linux用户（也就是说两个应用的linux userid相同），这样二者可以互相访问。在节省资源的时候，也可以安排拥有相同用户ID的应用在同一个Linux进程内运行，共享同一个虚拟机。</li>
+<li>应用可以请求访问设备数据的权限，由用户明确授予这些权限。比如说应用请求获得访问文件，访问相机，访问联系人等等的权限，由用户明确授予即可。</li>
+</ul>
+<h3 id="Android四大组件（重点）"><a href="#Android四大组件（重点）" class="headerlink" title="Android四大组件（重点）"></a><strong>Android四大组件（重点）</strong></h3><p>应用的四大组件：</p>
+<ul>
+<li>Activity： 拥有用户界面的单一屏幕</li>
+<li>Service：在后台运行的组件，没有界面</li>
+<li>BroadcastReceiver： （广播接收器）相应系统的广播通知的组件</li>
+<li>Content providers：（内容提供程序），管理共享数据，为其他应用提供查询修改接口</li>
+</ul>
+<h4 id="Activity"><a href="#Activity" class="headerlink" title="Activity"></a>Activity</h4><p>Activity是与用户交互的入口点，拥有单个的屏幕。</p>
+<blockquote>
+<p>官网上的举例：<br>例如电子邮件的应用可能会有三个Activity：</p>
+<ul>
+<li>显示新电子邮件列表的Activity</li>
+<li>用于撰写电子邮件的Activity</li>
+<li>用于阅读电子邮件的Activity<br>这三个紧密协作联系，但是每个Activity都是独立于其他的Activity而存在，其他应用可以启动其中任何一个Activity。</li>
+</ul>
+</blockquote>
+<p>这很像一个web中的一个网页，每一个网页都是独立的，它们一起构成一个网站，其他别的链接也可以打开这个网站里的任何一个网页（当然在Android里面就还会涉及到权限能不能打开的问题）。然后同一时间只能有一个网页显示在屏幕上（独占一个屏幕）。</p>
+<h5 id="Activity的生命周期"><a href="#Activity的生命周期" class="headerlink" title="Activity的生命周期"></a>Activity的生命周期</h5><p>首先是一个标准的图：<br><img src="2.png" alt=""></p>
+<p>Activity 包括7个生命周期的流程，分别是：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">onCreate(),onStart(),onResume(),onPause(),onStop(),onDestory(),onRestart().</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>onCreate()</code>是生命周期的开始，<code>onDestory()</code>是生命周期的结束</p>
+<ul>
+<li>Activity启动： <code>onCreate()</code> -&gt; <code>onStart()</code>（此时不可见） -&gt; <code>onResume</code> -&gt; 处于运行态，可见</li>
+<li>Activity被暂时覆盖：<code>onPause()</code> , 当用户取消覆盖的时候 <code>onResume()</code> 恢复</li>
+<li>Activity跳转到了新的Activity、Activity进入了后台或者锁屏的时候：running的Activity -&gt; <code>onPause()</code> -&gt; <code>onStop()</code> -&gt; 停滞状态的Activity</li>
+<li>Activity重新回到前台或者解锁的时候： 停滞状态的Activity -&gt; <code>onRestart()</code> -&gt; <code>onStart()</code> -&gt; <code>onResume()</code> -&gt; Activity重新running</li>
+<li>Activity在后台且内存不足的时候：系统会杀死这个后台状态的Activity（此时这个Activity的引用虽然在任务栈中，但是这个时候引用指向的对象已经是null）。若想再回到running，就需要重新初始化生命周期: <code>onCreate()</code> -&gt; <code>onStart()</code> -&gt; <code>onResume()</code></li>
+<li>Activity退出: <code>onPause()</code> -&gt; <code>onStop()</code> -&gt; <code>onDestory()</code></li>
+</ul>
+<p>(上面的方法都是对应事件的回调函数，选择重写的方法而不能主动调用。如果想主动退出Activity，应该调用<code>finish()</code>)。</p>
+<h5 id="Activity的四种启动模式"><a href="#Activity的四种启动模式" class="headerlink" title="Activity的四种启动模式"></a>Activity的四种启动模式</h5><p>因为我们的APP一般都是由多个Activity构成的，而在Android给我们提供了任务（Task）的概念，就是将多个相关的Activity收集起来，进行Activity的跳转与返回。实现Android就是通过任务栈来管理这些Activity的。<br><strong>任务栈</strong>：任务栈是一种后进先出的结构。切换到新的Activity，就会被压入栈中成为栈顶。位于栈顶的Activity处于running状态。当back按钮按下的时候，栈顶的Activity会出栈并且调用<code>onDestory()</code>结束生命周期，紧随其后Activity的成为栈顶。当栈内没有Activity那么系统就会回收这个栈，每个APP默认只有一个栈，以这个APP的包名来命名。</p>
+<p>四种启动模式：</p>
+<ul>
+<li>standard标准模式: 默认的模式，新的Activity会默认压入栈中。</li>
+<li>singleTop栈顶复用模式：如果新的Activity在任务栈的栈顶（也就是跟栈顶的相同）那么就不会重新创建。如果不在任务栈的栈顶，就跟standard模式相同。</li>
+<li>singleTask栈内复用模式：如果新的Activity在任务栈的栈内，那么新的Activity就不会创建，而是将原本栈内的Activity调到栈顶（这个Activity之上的所以Activity都会被清理销毁）。</li>
+<li>singleInstance单例模式：这个要求更严格，这种模式的Activity只能单独的位于一个任务栈里面，是一个加强版的singleTask。任务栈里面只能有这一个Activity。</li>
+</ul>
+<h4 id="Service"><a href="#Service" class="headerlink" title="Service"></a>Service</h4><p>服务是Android中实现程序后台运行的解决方案，非常适合去执行那些不需要和用户交互而且还要求长时间运行的任务（没有界面）。比如下载，播放音乐等等。</p>
+<h5 id="Service的生命周期"><a href="#Service的生命周期" class="headerlink" title="Service的生命周期"></a>Service的生命周期</h5><p>先看图：<br><img src="3.png" alt="service.png"><br>首先service的声明中，<code>onCreate()</code>只会回调一次来创建,<code>onDestory()</code>只会在关闭的方法回调一次。<br>启动service的方法有三种：</p>
+<ul>
+<li><code>StartService()</code>启动service</li>
+<li><code>BindService()</code> 启动service</li>
+<li>start之后再bind</li>
+</ul>
+<p>这几者的区别：<br><strong>StartService</strong>只是启动这个service，启动它的组件（比如Activity）和这个Service没有关联。service的关闭只能是自己执行完某些任务了之后执行<code>stopSelf</code>或者其他组件调用它的<code>stopService</code>才能终止。<br><strong>BindService</strong>方法启动的Service，其他组件可以通过回调获取Service的代理对象和Service交互，而且两方进行绑定，当启动的组件销毁的时候，Service会自动进行<code>unBind</code>操作解绑。当发现所有的绑定都进行了<code>unBind</code>的时候，Service会销毁。<br>先start然后另一个组件进行bind这个已经启动的Service的时候，系统仅仅是进行了绑定而不会把生命周期与另一个组件绑定。也就是解绑了之后Service还是属于start启动的service。</p>
+<h4 id="BroadcastReceiver"><a href="#BroadcastReceiver" class="headerlink" title="BroadcastReceiver"></a>BroadcastReceiver</h4><p>广播能够广泛的运用在应用程序之间传递事件信息的机制。借助广播接收器，系统能够在常规的用户流之外向应用传递事件，从而允许应用响应系统范围内的广播通知。广播接收器可以对许多外部事件进行响应，比如当电话呼入，手机屏幕关闭等事件，系统会发出广播，对应的注册的广播接收器会收到这些事件消息对应地处理。广播接收器虽然没有界面，但是可以创造状态栏的通知。比如wifi连接-&gt; 系统广播事件-&gt;对应的广播接收器收到后创建通知：网络连接恢复。</p>
+<p>广播接收器有两种注册方法：静态注册和动态注册</p>
+<ul>
+<li>静态注册： 在<code>AndroidManifest.xml</code>（应用清单文件，下文会仔细解释）里声明，当APP首次启动的时候就注册到系统中。</li>
+<li>动态注册： 在某个组件（一般是Activity）运行的时候注册广播接收器。<br>区别：静态注册是一直在监听对应的消息，耗电耗内存，当APP退出之后也能收到对应的消息进行处理。 动态注册是在代码中动态的注册，当组件退出之后也没法接受广播了（注意要在组件结束前移除广播接收器，否则会导致内存泄漏）。</li>
+</ul>
+<h4 id="Content-providers"><a href="#Content-providers" class="headerlink" title="Content providers"></a>Content providers</h4><p>内容提供者提供内容的共享。可以将文件，数据库，网络上的可持久化的数据提供给其他应用修改查询。<br>一般有两个场景：</p>
+<ul>
+<li>自己的应用需要访问别的应用的数据，比如访问手机联系人，短信等，想对这些数据进行读取或修改，就要用到这些应用的ContentProvider。</li>
+<li>自己的应用需要给别的应用共享信息，也要用到ContentProvider，而且可以选择性的共享信息，避免了关键隐私信息泄露等。</li>
+</ul>
+<h3 id="组件启动与组件之间联系"><a href="#组件启动与组件之间联系" class="headerlink" title="组件启动与组件之间联系"></a><strong>组件启动与组件之间联系</strong></h3><p><strong>Android系统的独特之处在于，任何应用都可以启动其他应用的组件</strong>。 比如一个应用想让用户使用设备相机拍摄照片，那可以使用系统的照片应用中对应的Activity即可，当拍摄之后会返回到原先的应用，对用户来说这相机就如同应用的一部分。<br>当系统启动一个应用的组件时候，就会启动这个应用对应的进程（如果没有启动的话）。这个应用和相机还是属于两个进程。所以说Android应用没有单个的入口点（<code>main()</code>函数），每一个组件都可以是应用的入口。</p>
+<p>因为安全沙箱的存在，不能直接启动另一个应用的组件，而是需要系统作为中间人。这些组件之间启动或者访问，就需要传递消息，这个消息就是 Intent（意图）。<br><img src="intent.webp" alt=""></p>
+<p>Intent 是启动组件，是组件直接联系的桥梁。<br>四种组件之中，Activity，Service，BroadCastReceiver 这三个组件都是通过Intent启动。（ContentProvider会在ContentResolver请求目标的时候启动，与其他不一样）。<br>对于启动Activity和Service，Intent会定义要执行的操作，并且可以指定待操作的数据等信息。对于BroadcastReceiver，Intent只会定义待广播的通知。</p>
+<p>Intent对象大致包括7个属性：Action（动作），Data（数据），Category（类别），Type（数据类型），Component（组件），Extra（扩展信息），Flag（标志位）。</p>
+<p>Intent分为显式Intent和隐式Intent。</p>
+<ul>
+<li>显式Intent： 直接通过组件名来启动某个组件，每次启动的组件只有一个。</li>
+<li>隐式Intent： 不指定组件名，而是指定Intent的Action，Data等（只描述意图），当我们启动的时候，会匹配出相关的满足要求的组件，如果不止一个，就会让用户选择使用哪个来处理Intent。<br>一个最熟悉的场景就是隐式Intent：<br><img src="intent1.jpg" alt="sample"></li>
+</ul>
+<h3 id="应用的清单文件"><a href="#应用的清单文件" class="headerlink" title="应用的清单文件"></a>应用的清单文件</h3><p>在Android系统启动应用之前，系统必须通过读取应用的清单文件（<code>AndroidMainifest.xml</code>）确认组件的存在，应用中所有用到的组件(除了动态注册的广播接收器) 都需要在这个文件中声明。<br>这个文件必须位于应用目录的根目录中。<br>除了声明应用的组件之外，清单文件还有许多其他的作用，比如：</p>
+<ul>
+<li>确定应用需要的任何用户权限，比如访问联系人，访问文件等</li>
+<li>根据应用使用的API，声明所需的最低API级别</li>
+<li>声明需要的硬件软件功能，比如相机等</li>
+</ul>
+<p>主要的三个功能：</p>
+<ul>
+<li><p>声明组件<br>代码里的Activity就是声明的一个组件</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">application</span> <span class="attr">android:icon</span>=<span class="string">"@drawable/app_icon.png"</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">"com.example.project.ExampleActivity"</span></span></span><br><span class="line"><span class="tag">                  <span class="attr">android:label</span>=<span class="string">"@string/example_label"</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br><span class="line">        ...</span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>声明组件的功能<br>这个就是声明了一个执行动作为SEND发送的一个组件</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="tag">&lt;<span class="name">application</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">"com.example.project.ComposeEmailActivity"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.SEND"</span> /&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">data</span> <span class="attr">android:type</span>=<span class="string">"*/*"</span> /&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.DEFAULT"</span> /&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure></li>
+<li><p>声明应用要求</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-feature</span> <span class="attr">android:name</span>=<span class="string">"android.hardware.camera.any"</span></span></span><br><span class="line"><span class="tag">                  <span class="attr">android:required</span>=<span class="string">"true"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-sdk</span> <span class="attr">android:minSdkVersion</span>=<span class="string">"7"</span> <span class="attr">android:targetSdkVersion</span>=<span class="string">"19"</span> /&gt;</span></span><br><span class="line">    ...</span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+</li>
+</ul>
+<h3 id="应用资源"><a href="#应用资源" class="headerlink" title="应用资源"></a>应用资源</h3><p>Android应用不仅仅是代码，还需要与源代码分离的静态资源，比如图像，音频文件还有xml文件定义的界面动画等。所有的资源都在 /res 的文件夹内。</p>
+<h2 id="Android-SDK-目录结构及作用"><a href="#Android-SDK-目录结构及作用" class="headerlink" title="Android SDK 目录结构及作用"></a>Android SDK 目录结构及作用</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">android-sdk&#x2F;</span><br><span class="line">	add-ones&#x2F;  -&gt; 一些附加的库，第三方公司的附加功能，比如GoogleMaps等</span><br><span class="line">	build-tools&#x2F;  -&gt; 构建项目的时候用到的工具，还包括一些编译工具等</span><br><span class="line">		28.0.3&#x2F;</span><br><span class="line">		29.0.3&#x2F;</span><br><span class="line">	docs&#x2F;		-&gt; 离线的开发者文档（可选）</span><br><span class="line">	platforms&#x2F;	 -&gt; sdk里面最重要的文件，每个文件夹都含有各个版本的sdk</span><br><span class="line">		android-28&#x2F;		-&gt; API级别28的sdk版本</span><br><span class="line">		android-29&#x2F;</span><br><span class="line">	platforms-tool&#x2F;	-&gt; 各版本sdk通用的工具，比如abd.exe,sqlite3.exe等</span><br><span class="line">	skins&#x2F;			-&gt; 安卓模拟器的皮肤</span><br><span class="line">	system-images&#x2F;	-&gt; 创建安卓模拟器的时候使用的系统镜像</span><br><span class="line">		android-28&#x2F;</span><br><span class="line">	tools&#x2F;		-&gt; 通用的Android开发、调试的工具</span><br></pre></td></tr></table></figure>
+<p>还有两个很重要的工具： SDK管理器 和 安卓模拟器管理器。（可以直接用IDE上带的工具来代替）</p>
+<h2 id="开发环境搭建"><a href="#开发环境搭建" class="headerlink" title="开发环境搭建"></a>开发环境搭建</h2><p>操作系统：win10<br>IDE：Android Studio （用起来跟idea一个感觉，非常棒！<del>比VS强太多了</del>）（直接官网下载安装即可）</p>
+<p>安装之后主要是设置SDK和模拟器。（我之前用VS下过一个sdk，Android Studio直接识别出来本地的了！）</p>
+<p>设置好之后就新建工程，然后新建一个空白的工程，一路next，IDE会自动生成一个空白项目。<br>项目结构如下：<br><img src="6.png" alt=""></p>
+<p>根目录里的清单文件 <code>AndroidMainifest.xml</code><br>java/  下的java代码（只有一个组件MainActivity）<br>res/  里是应用的各种资源，包括布局，图片等等。<br>res/layout 里的activity_main.xml 就是MainActivity这个Activity对应的布局文件。</p>
+<p>配置好模拟器设备之后，直接点击run运行即可完成<br><img src="7.png" alt=""></p>
+<p>Hello World!</p>
+<hr/>
+
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><a href="https://developer.android.google.cn/" target="_blank"><strong>Android开发者平台</strong>（官网有最新文档）</a></li>
+<li><a href="https://www.runoob.com/w3cnote/android-tutorial-intro.html" target="_blank">Android基础入门教程-菜鸟教程</a></li>
+<li><a href="https://www.jianshu.com/p/92227738f270" target="_blank">简单理解Android Dalvik</a></li>
+<li><a href="https://blog.csdn.net/u011733020/article/details/99411986" target="_blank">Android Runtime (ART) 和 Dalvik</a></li>
+<li><a href=" https://www.jianshu.com/p/44f87c810903 " target="_blank">NDK开发从放弃到入门</a></li>
+<li><a href="https://www.jianshu.com/p/c07a97f01461" target="_blank">安卓基础知识-简书</a></li>
+<li><a href="https://www.jianshu.com/p/0f52a3defc1d" target="_blank">安卓四大组件-简书</a></li>
+<li><a href="https://www.jianshu.com/p/ca3d87a4cdf3">Android四大组件：BroadcastReceiver史上最全面解析-简书</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"><i class="fa fa-tag"></i> Android</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/" rel="prev" title="Xamarin学习1 -- 概念篇">
+      <i class="fa fa-chevron-left"></i> Xamarin学习1 -- 概念篇
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Android平台架构"><span class="nav-number">1.</span> <span class="nav-text">Android平台架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Linux内核层"><span class="nav-number">1.1.</span> <span class="nav-text">Linux内核层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HAL硬件抽象层"><span class="nav-number">1.2.</span> <span class="nav-text">HAL硬件抽象层</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Libarary层"><span class="nav-number">1.3.</span> <span class="nav-text">Libarary层</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Android-Runtime"><span class="nav-number">1.3.1.</span> <span class="nav-text">Android Runtime</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Native-C-C-Libarary"><span class="nav-number">1.3.2.</span> <span class="nav-text">Native C&#x2F;C++ Libarary</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JAVA-API-Framework"><span class="nav-number">1.4.</span> <span class="nav-text">JAVA API Framework</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#System-Application-和-Application"><span class="nav-number">1.5.</span> <span class="nav-text">System Application 和 Application</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Android-Application-基础知识"><span class="nav-number">2.</span> <span class="nav-text">Android Application 基础知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安全沙盒与最小权限原则"><span class="nav-number">2.1.</span> <span class="nav-text">安全沙盒与最小权限原则</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#安全沙盒-security-sandbox"><span class="nav-number">2.1.1.</span> <span class="nav-text">安全沙盒 security sandbox</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#最小权限原则"><span class="nav-number">2.1.2.</span> <span class="nav-text">最小权限原则</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android四大组件（重点）"><span class="nav-number">2.2.</span> <span class="nav-text">Android四大组件（重点）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Activity"><span class="nav-number">2.2.1.</span> <span class="nav-text">Activity</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Activity的生命周期"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">Activity的生命周期</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Activity的四种启动模式"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">Activity的四种启动模式</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Service"><span class="nav-number">2.2.2.</span> <span class="nav-text">Service</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Service的生命周期"><span class="nav-number">2.2.2.1.</span> <span class="nav-text">Service的生命周期</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#BroadcastReceiver"><span class="nav-number">2.2.3.</span> <span class="nav-text">BroadcastReceiver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Content-providers"><span class="nav-number">2.2.4.</span> <span class="nav-text">Content providers</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#组件启动与组件之间联系"><span class="nav-number">2.3.</span> <span class="nav-text">组件启动与组件之间联系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用的清单文件"><span class="nav-number">2.4.</span> <span class="nav-text">应用的清单文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用资源"><span class="nav-number">2.5.</span> <span class="nav-text">应用资源</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Android-SDK-目录结构及作用"><span class="nav-number">3.</span> <span class="nav-text">Android SDK 目录结构及作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开发环境搭建"><span class="nav-number">4.</span> <span class="nav-text">开发环境搭建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">5.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杨博"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">杨博</p>
+  <div class="site-description" itemprop="description">一个快废掉的咸鱼罢了</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yanghaku" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yanghaku" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:1961882079@qq.com" title="E-Mail → mailto:1961882079@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨博</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='125' src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-nest@1/canvas-nest.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/medium-zoom@1/dist/medium-zoom.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+<script type="text/x-mathjax-config">
+    MathJax.Ajax.config.path['mhchem'] = '//cdn.jsdelivr.net/npm/mathjax-mhchem@3';
+
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        extensions: ['[mhchem]/mhchem.js'],
+      equationNumbers: {
+        autoNumber: 'AMS'
+      }
+    }
+  });
+
+  MathJax.Hub.Register.StartupHook('TeX Jax Ready', function() {
+    MathJax.InputJax.TeX.prefilterHooks.Add(function(data) {
+      if (data.display) {
+        var next = data.script.nextSibling;
+        while (next && next.nodeName.toLowerCase() === '#text') {
+          next = next.nextSibling;
+        }
+        if (next && next.nodeName.toLowerCase() === 'br') {
+          next.parentNode.removeChild(next);
+        }
+      }
+    });
+  });
+
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i = 0; i < all.length; i += 1) {
+      element = document.getElementById(all[i].inputID + '-Frame').parentNode;
+      if (element.nodeName.toLowerCase() == 'li') {
+        element = element.parentNode;
+      }
+      element.classList.add('has-jax');
+    }
+  });
+</script>
+<script>
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML', () => {
+    MathJax.Hub.Typeset();
+  }, window.MathJax);
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '55d1dd52dc07814ba5c8',
+      clientSecret: 'b538350d97925eb5f6561c743de17a14e7c53e2e',
+      repo: 'yanghaku.github.io',
+      owner: 'yanghaku',
+      admin: ['yanghaku'],
+      id: '72b2dd47c67aeee7e5f4ce2f755d5ce9',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
