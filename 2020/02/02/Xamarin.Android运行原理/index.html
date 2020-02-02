@@ -48,17 +48,25 @@
   };
 </script>
 
-  <meta name="description" content="一个快废掉的咸鱼罢了">
-<meta property="og:type" content="website">
-<meta property="og:title" content="YangBo">
-<meta property="og:url" content="https://yanghaku.github.io/tags/iOS/index.html">
+  <meta name="description" content="这篇文章主要内容：Xamarin.Android应用的体系结构Xamarin.Android应用怎么运行在Android系统中的。MCW和ACWXamarin.Android应用包的结构 前置知识：Android操作系统的基础知识 概述在Android原生的开发中，主要运行的是Java或Kotlin编译后的字节码（.dex）每个应用单独分配一个ART虚拟机，运行在linux内核之上。 对于其他语言">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Xamarin.Android 运行原理">
+<meta property="og:url" content="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/index.html">
 <meta property="og:site_name" content="YangBo">
-<meta property="og:description" content="一个快废掉的咸鱼罢了">
+<meta property="og:description" content="这篇文章主要内容：Xamarin.Android应用的体系结构Xamarin.Android应用怎么运行在Android系统中的。MCW和ACWXamarin.Android应用包的结构 前置知识：Android操作系统的基础知识 概述在Android原生的开发中，主要运行的是Java或Kotlin编译后的字节码（.dex）每个应用单独分配一个ART虚拟机，运行在linux内核之上。 对于其他语言">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/architecture1.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/1.png">
+<meta property="article:published_time" content="2020-02-02T01:25:00.000Z">
+<meta property="article:modified_time" content="2020-02-02T07:17:10.255Z">
 <meta property="article:author" content="杨博">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content=".NET">
+<meta property="article:tag" content="Xamarin">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/architecture1.png">
 
-<link rel="canonical" href="https://yanghaku.github.io/tags/iOS/">
+<link rel="canonical" href="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/">
 
 
 <script id="page-configurations">
@@ -66,11 +74,11 @@
   CONFIG.page = {
     sidebar: "",
     isHome: false,
-    isPost: false
+    isPost: true
   };
 </script>
 
-  <title>标签: iOS | YangBo</title>
+  <title>Xamarin.Android 运行原理 | YangBo</title>
   
 
 
@@ -210,54 +218,135 @@
           <div class="content">
             
 
+  <div class="posts-expand">
+      
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h1 class="collection-header">iOS
-          <small>标签</small>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="杨博">
+      <meta itemprop="description" content="一个快废掉的咸鱼罢了">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangBo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Xamarin.Android 运行原理
         </h1>
-      </div>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-02 09:25:00 / 修改时间：15:17:10" itemprop="dateCreated datePublished" datetime="2020-02-02T09:25:00+08:00">2020-02-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/NET%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index">
+                    <span itemprop="name">.NET学习</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <h1 class="collection-header">2020</h1>
+        <p>这篇文章主要内容：<br>Xamarin.Android应用的体系结构<br>Xamarin.Android应用怎么运行在Android系统中的。<br>MCW和ACW<br>Xamarin.Android应用包的结构</p>
+<p>前置知识：<a href="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/" target="_blank">Android操作系统的基础知识</a></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在Android原生的开发中，主要运行的是Java或Kotlin编译后的字节码（<code>.dex</code>）每个应用单独分配一个ART虚拟机，运行在linux内核之上。</p>
+<p>对于其他语言做的应用在Android平台运行，像c/c++这种静态编译的语言，可以直接编译成二进制码，通过JNI（java本地接口）与java通信（调用操作系统的API），直接运行在Library层即可（因为这一层是c/c++实现的，所以这一层也提供了原生c/c++的API供调用）。</p>
+<p>而Xamarin是用C#开发的语言，C#和java一样，也是即时编译（JIT）语言，编译成中间语言（IL）之后需要在 .NET虚拟机上运行（在移动端是Mono虚拟机）。Android操作系统本身就没有C#的运行环境，而C#不能直接编译成二进制机器码，所以要融入Android，还需要在每个应用里带着 .NET运行时（Mono虚拟机）。这样C#才能在Android系统里运行。</p>
+<a id="more"></a>
+
+<p>其实Android本身就是软件叠层的方式构建的操作系统，Android上没有支持C#运行的环境，应用安装的时候自己带上就好了。（就举个简单的栗子：windows本身不带着JRE，而用Java语言写的程序在windows上需要JRE来运行，那么我开发Java应用的时候直接在应用里打包一个给自己专门用的JRE，不就支持所有的Windows操作系统了~ ）</p>
+<p>这只是简单来说，其实具体还得解决开发的时候操作系统的API调用等等各种问题。</p>
+<h2 id="体系结构"><a href="#体系结构" class="headerlink" title="体系结构"></a>体系结构</h2><p>先放一个官网文档里的架构图：<br><img src="architecture1.png" alt="architecture1.png"></p>
+<p>这张图是Xamarin.Android应用在Android平台上运行的架构图。右边的部分是原生的Android应用在Android系统上的架构图。左边是Xamarin.Android项目在对应层里面添加的运行依赖东西。首先就是在ART的同一层添加了Mono虚拟机（c语言实现的），运行在Linux之上。项目里面java编译的字节码通过ART执行，c#编译的字节码通过Mono虚拟机来执行。应用运行的时候，两个虚拟机在Linux内核之上并行运行的。</p>
+<blockquote>
+<p>Xamarin.Android应用需要包装打包Mono虚拟机，所以产生的<code>.apk</code>文件比原生开发出来的要大。<br>而且应用运行的时候，比原生应用多运行一个虚拟机，效率自然就低了不少。</p>
+</blockquote>
+<p>两者通信：<br>当Java代码运行的时候需要调用C#写好的代码的时候，就需要ART通过ACW来使Mono去运行。<br>对于Xamarin.Android开发人员来说，C#的部分可以调用 .NET API（主要是C#语言的部分），也可以通过一些库来直接访问Linux操作系统的设备。但是Android操作系统大多数的访问（比如电话，音频等）都是java的API来访问的（右边的Java API Framework层），所以才有MCW来调用这些功能。<br>简单来说，ACW是java代码运行的时候去调用C#代码的桥梁，而MCW是C#的代码去调用java代码的桥梁。</p>
+<h2 id="MCW-和-ACW"><a href="#MCW-和-ACW" class="headerlink" title="MCW 和 ACW"></a>MCW 和 ACW</h2><p>MCW（Managed Callable Wrappers）：托管可调用包装器<br>ACW（Android Callable Wrappers）：安卓可调用包装器</p>
+<p>ACW: Android callable wrappers are a JNI bridge which are used any time the Android runtime needs to invoke managed code.<br>ACW是一种JNI(java native interface)桥，这里的managed code指的是C#编译后的中间语言（IL）。ART运行的java代码通过ACW来调用C#代码在Mono中执行。</p>
+<p>MCW：Managed Callable Wrappers are a JNI bridge which are used any time managed code needs to invoke Android code and provide support for overriding virtual methods and implementing Java interfaces。<br>MCW也是一种JNI桥，为C#调用Android系统的API或者第三方写好的Java类库提供支持。</p>
+<p>通过这两种方式，就可以让C#代码与Android平台的代码进行通信而且正常地运行了。</p>
+<h2 id="应用程序包"><a href="#应用程序包" class="headerlink" title="应用程序包"></a>应用程序包</h2><p>Xamarin.Android开发出来的应用，结构上与普通的应用程序包差不多，比如res里的布局等，还多了以下的内容：</p>
+<ul>
+<li>应用程序集（包含C#编译后的IL）</li>
+<li>Native libraries（对于不同架构机型的Mono运行时）</li>
+</ul>
+<p>比如打包的<code>HelloWorld.apk</code>，解压后的目录：<br><img src="1.png" alt=""><br>assemblies文件夹里就是应用程序集，包含了各种编译后的<code>.dll</code>文件<br>lib文件夹里面就是native libraries。里面有个文件夹<code>arm64-v8a</code>和<code>armeabi-v7a</code>,里面都是分别对应处理器架构的Mono虚拟机（<code>.so</code>文件）。</p>
+<p>其他的就跟普通的应用程序包差不多了，比如根目录的清单文件，res资源文件夹等。</p>
+<hr/>
+
+<p>总之一句话：<br><strong>The APK is still a valid Java APK. It Starts in ART,and uses ART for UI(Android.*classes). Mono is used to run .NET IL. The IL and Android native code run side-by-side and communicate via callable wrappers.</strong> (github的一条issue里面的，总结的很到位，<del>我翻译不了只能放英文了</del>)。</p>
+<hr/>
+
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><a href="https://docs.microsoft.com/zh-cn/xamarin/android/internals/architecture" target="_blank">官网文档</a></li>
+<li><a href="https://www.meiwen.com.cn/subject/fuwhjftx.html" target="_blank">Xamarin.Android 运行原理</a></li>
+<li><a href="https://www.jianshu.com/p/5847a2cb68c0">JNI原理 - 简书</a></li>
+</ul>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-01-30T16:46:00+08:00"
-              content="2020-01-30">
-          01-30
-        </time>
-      </div>
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"><i class="fa fa-tag"></i> Android</a>
+              <a href="/tags/NET/" rel="tag"><i class="fa fa-tag"></i> .NET</a>
+              <a href="/tags/Xamarin/" rel="tag"><i class="fa fa-tag"></i> Xamarin</a>
+          </div>
 
-      <h2 class="post-title">
-          <a class="post-title-link" href="/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/" itemprop="url">
-            <span itemprop="name">Xamarin学习1 -- 概念篇</span>
-          </a>
-      </h2>
+        
 
-    </header>
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/" rel="prev" title="Android入门知识">
+      <i class="fa fa-chevron-left"></i> Android入门知识
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
   </article>
+  
+  
+  
 
-    </div>
   </div>
-  
-  
-  
-
-  
-
 
 
           </div>
           
+    <div class="comments" id="gitalk-container"></div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -304,6 +393,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#体系结构"><span class="nav-number">2.</span> <span class="nav-text">体系结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MCW-和-ACW"><span class="nav-number">3.</span> <span class="nav-text">MCW 和 ACW</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用程序包"><span class="nav-number">4.</span> <span class="nav-text">应用程序包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">5.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -485,6 +575,25 @@
 
   
 
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '55d1dd52dc07814ba5c8',
+      clientSecret: 'b538350d97925eb5f6561c743de17a14e7c53e2e',
+      repo: 'yanghaku.github.io',
+      owner: 'yanghaku',
+      admin: ['yanghaku'],
+      id: 'e933ef0a218751567b155507cc44d525',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
 
 </body>
 </html>

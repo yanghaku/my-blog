@@ -157,7 +157,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">7</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">8</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -211,6 +211,87 @@
             
 
   <div class="posts-expand">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="杨博">
+      <meta itemprop="description" content="一个快废掉的咸鱼罢了">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangBo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/" class="post-title-link" itemprop="url">Xamarin.Android 运行原理</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-02 09:25:00 / 修改时间：15:17:10" itemprop="dateCreated datePublished" datetime="2020-02-02T09:25:00+08:00">2020-02-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/NET%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index">
+                    <span itemprop="name">.NET学习</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>这篇文章主要内容：<br>Xamarin.Android应用的体系结构<br>Xamarin.Android应用怎么运行在Android系统中的。<br>MCW和ACW<br>Xamarin.Android应用包的结构</p>
+<p>前置知识：<a href="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/" target="_blank">Android操作系统的基础知识</a></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在Android原生的开发中，主要运行的是Java或Kotlin编译后的字节码（<code>.dex</code>）每个应用单独分配一个ART虚拟机，运行在linux内核之上。</p>
+<p>对于其他语言做的应用在Android平台运行，像c/c++这种静态编译的语言，可以直接编译成二进制码，通过JNI（java本地接口）与java通信（调用操作系统的API），直接运行在Library层即可（因为这一层是c/c++实现的，所以这一层也提供了原生c/c++的API供调用）。</p>
+<p>而Xamarin是用C#开发的语言，C#和java一样，也是即时编译（JIT）语言，编译成中间语言（IL）之后需要在 .NET虚拟机上运行（在移动端是Mono虚拟机）。Android操作系统本身就没有C#的运行环境，而C#不能直接编译成二进制机器码，所以要融入Android，还需要在每个应用里带着 .NET运行时（Mono虚拟机）。这样C#才能在Android系统里运行。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
         
   
   
@@ -330,7 +411,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-01-31 11:19:59" itemprop="dateModified" datetime="2020-01-31T11:19:59+08:00">2020-01-31</time>
+                <time title="修改时间：2020-02-01 16:32:05" itemprop="dateModified" datetime="2020-02-01T16:32:05+08:00">2020-02-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -848,7 +929,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

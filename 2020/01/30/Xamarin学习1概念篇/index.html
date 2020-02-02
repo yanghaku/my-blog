@@ -58,6 +58,7 @@
 <meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/1.png">
 <meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/xamarin-architecture.png">
 <meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/xamarin-forms-architecture.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/diff.png">
 <meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/2.png">
 <meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/3.png">
 <meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/4.png">
@@ -68,7 +69,7 @@
 <meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/6.png">
 <meta property="og:image" content="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/run.png">
 <meta property="article:published_time" content="2020-01-30T08:46:00.000Z">
-<meta property="article:modified_time" content="2020-01-31T03:19:59.308Z">
+<meta property="article:modified_time" content="2020-02-01T08:32:05.914Z">
 <meta property="article:author" content="杨博">
 <meta property="article:tag" content="Android">
 <meta property="article:tag" content=".NET">
@@ -176,7 +177,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">7</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">8</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -264,7 +265,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-01-31 11:19:59" itemprop="dateModified" datetime="2020-01-31T11:19:59+08:00">2020-01-31</time>
+                <time title="修改时间：2020-02-01 16:32:05" itemprop="dateModified" datetime="2020-02-01T16:32:05+08:00">2020-02-01</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -292,7 +293,7 @@
         <p>主要介绍了 Xamarin 中 Xamarin.forms , Xamarin.Android, Xamarin.iOS 的区别和联系，并且搭建环境和创建第一个 Xamarin.forms 应用并运行调试。</p>
 <a id="more"></a>
 
-<h3 id="Xamarin"><a href="#Xamarin" class="headerlink" title="Xamarin"></a>Xamarin</h3><p>Xamarin 是一个开源平台，用于通过 .NET 构建适用于 IOS，Android 和 Windows 的新式应用程序。是一个抽象层，可用于管理共享代码与基础平台代码的通信。使开发人员能够跨平台共享应用程序，允许开发人员以一种语言编写所有的业务逻辑，但是在每个平台上各自实现外观等。</p>
+<h3 id="Xamarin"><a href="#Xamarin" class="headerlink" title="Xamarin"></a>Xamarin</h3><p>Xamarin是Mono开源项目的一个分支，把Mono里移动开发这一块专门拿出来做成了一个商业项目。（原先是收费的商业项目，到了2016年微软把Xamarin公司收购了，才变成开源的了。）<br>现在Xamarin是一个开源平台，用于通过 .NET 构建适用于 IOS，Android 和 Windows 的新式应用程序。是一个抽象层，可用于管理共享代码与基础平台代码的通信。使开发人员能够跨平台共享应用程序，允许开发人员以一种语言编写所有的业务逻辑，但是在每个平台上各自实现外观等。</p>
 <p>说白了就是共享底层逻辑的 C# 的代码，并且创建各自的UI, 使得一个工程开发能够多个平台使用。</p>
 <p><img src="1.png" alt="1.png"></p>
 <p>然后就是 Xamarin 的结构：</p>
@@ -312,8 +313,9 @@
 <li>Write cross-platform apps in C# with Visual Studio.</li>
 </ul>
 </blockquote>
+<p>UI的开发可以是原生开发，也可以是用Xamarin.Forms开发，原生开发就是使用Android和iOS原生的UI控件。基于Xamarin.Forms的UI开发可以使代码共享程度进一步提高：<br><img src="diff.png" alt=""><br>从上图可以看到，左边的原生UI开发，代码共享程度是75%左右，也就是说只是共享了后台的逻辑代码了，前端的UI还是要各自做各自的。右边的Xamarin.Forms开发的项目，代码共享程度到了95%，这就几乎没有多少平台相关的代码了。</p>
 <h3 id="以上的关系总结"><a href="#以上的关系总结" class="headerlink" title="以上的关系总结"></a>以上的关系总结</h3><p> Xamarin.Android 和 Xamarin.iOS  (其实还有Xamarin.Mac , Xamarin.UWP，Xamarin.tvOS 等) 这些都是Xamarin里的具体的工程， 专门对应于具体的平台里的，可以单独开发。</p>
-<p>而Xamarin.Forms 是用于跨平台的，可以实现同时开发Android和iOS和UWP 等，将一个共享的里的分别渲染到具体的工程里去，实现大部分的UI和逻辑代码共享。</p>
+<p>而Xamarin.Forms 是用于跨平台的，可以实现同时开发Android和iOS和UWP 等，将一个共享的UI框架分别渲染到具体的平台工程里去，实现大部分的UI和逻辑代码共享。</p>
 <p>比如在VS2019 里面创建一个Xamarin项目的时候，可以看到非常多的选项：</p>
 <p><img src="2.png" alt="2.png"></p>
 <p>第一个Xamarin.Forms 就是一个跨平台的方案，当在Xamarin forms创建的时候勾选这Android和iOS的时候(因为没有装UWP的开发环境，所以只选了这两个)，项目的结构就会如下：</p>
@@ -361,6 +363,7 @@
 <li><a href=" https://docs.microsoft.com/zh-cn/xamarin/ " target="_blank">官网Xamarin文档</a></li>
 <li><a href=" https://www.cnblogs.com/zpldream/p/10742030.html " target="_blank"> Xamarin.Form与Xamarin.Android或Xamarin.IOS的区别简述</a></li>
 <li><a href="https://www.jianshu.com/p/d8c507ad244a" target="_blank">写给 iOS 程序员的 Xamarin 入门教程</a></li>
+<li><a href="https://www.cnblogs.com/cloudland0716/p/7510201.html" target="_blank">Xamarin介绍</a></li>
 </ul>
 
     </div>
@@ -467,7 +470,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
