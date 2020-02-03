@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://yanghaku.github.io/"/>
-  <updated>2020-02-02T07:17:10.255Z</updated>
+  <updated>2020-02-03T13:59:52.806Z</updated>
   <id>https://yanghaku.github.io/</id>
   
   <author>
@@ -15,6 +15,30 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>机器学习入门-西瓜书学习笔记（1）绪论</title>
+    <link href="https://yanghaku.github.io/2020/02/03/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B01%E7%BB%AA%E8%AE%BA/"/>
+    <id>https://yanghaku.github.io/2020/02/03/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B01%E7%BB%AA%E8%AE%BA/</id>
+    <published>2020-02-03T05:19:00.000Z</published>
+    <updated>2020-02-03T13:59:52.806Z</updated>
+    
+    <content type="html"><![CDATA[<p>作为一个对人工智能机器学习领域一无所知的小白，看到许多大神都在推荐周志华老师的《机器学习》这本书来入门。我也找到了这本书，想把这本书研究透彻，借助这本书成为迈进这个陌生的领域。正所谓不动笔墨不读书，我要在学习的同时，把读到的想到的学到的都记下来，才能更好地真正理解。希望能像前辈大神们那样，坚持读完这本书（并记下属于自己的西瓜书笔记）。<br>就像书里说的那句<code>这学期狠下功夫，基础概念弄得清清楚楚，算法作业也是信手拈来，这门课成绩一定差不了！</code><br>加油!奥力给！</p><h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><a id="more"></a><p><strong>机器学习</strong>（machine learning）是致力于通过计算的手段，利用“经验”来改善系统自身的性能的一门学科。在计算机系统中，“经验”通常以“数据”的形式存在，所以机器学习研究的主要内容就是通过这些“数据”来产生<strong>模型</strong>的算法，也就是<strong>学习算法</strong>（learning algorithm）。<br>也就是<br>$$<br>原始数据（经验）\xrightarrow{学习算法} 模型<br>$$<br>学习之后应用解决问题：<br>$$<br>新的情况（经验没有的）\xrightarrow{学习算法产生的模型} 对应的结果或判断<br>$$</p><p>这个<strong>模型</strong>泛指从数据中学到的结果。有的文献用<strong>模型</strong>来指全局性的结果（比如一棵决策树），用<strong>模式</strong>来指局部性的结果（比如一条规则）。</p><blockquote><p>T.M.Mitchell在1997年所著的Machine Learning给出了更形式化的定义：<br>假设用<strong>P</strong>来评估计算机程序在某任务类<strong>T</strong>上的性能，若一个程序通过利用经验<strong>E</strong>在<strong>T</strong>任务上获得了性能改善，则我们就说关于<strong>T</strong>和<strong>P</strong>，该程序对<strong>E</strong>进行了学习。</p></blockquote><h2 id="基本术语"><a href="#基本术语" class="headerlink" title="基本术语"></a>基本术语</h2><ul><li><strong>数据集</strong>（data set）：进行机器学习需要的数据所有记录的集合。其中每一条记录是关于一个事件或者对象的一个描述，称为一个“<strong>示例</strong>”（instance）或“<strong>样本</strong>”（sample）。 </li><li><strong>属性</strong> ： 反映事件或者对象在某方面的表现或性质的事项，称为“<strong>属性</strong>”（attribute）或“<strong>特征</strong>”（feature）。</li><li><strong>属性值</strong>：属性上的取值称为“<strong>属性值</strong>”。</li><li><strong>属性空间</strong>：属性张成的空间，称为“<strong>属性空间</strong>”（attribute space），“<strong>样本空间</strong>”或“<strong>输入空间</strong>”。</li><li><strong>特征向量</strong>：由于空间中的每一个点对应一个坐标向量，因此我们也把一个样本称为<strong>特征向量</strong>（feature vector）。</li><li><strong>维数</strong>：一个样本的特征的个数称为<strong>维数</strong>（dimensionality）。</li></ul><p>比如一个西瓜（色泽=青绿,根蒂=蜷缩,敲声=浊响）这条记录就是<strong>示例</strong>或<strong>样本</strong>。所有的西瓜示例组成的集合就是<strong>数据集</strong>。<br>“色泽”，“根蒂”，“敲声”就是<strong>属性</strong>。<br>“青绿”，“蜷缩”，“浊响”就是对应的<strong>属性值</strong>。<br>把西瓜的“色泽”，“根蒂”，“敲声”作为三个坐标轴，则他们张成一个用于<strong>描述西瓜的三维空间，</strong>每个西瓜都能在这个空间里找到属于自己的坐标位置。<br>这个西瓜样本也叫做一个<strong>特征向量</strong>：(青绿,蜷缩,浊响)就是在样本空间对应的坐标。</p><blockquote><p>在这里我的理解是数据集就像数据库里面的一张数据表，表里每一行记录是其中的一个样本，每一列就是对象的一个属性，对应的值也就是属性值。<br>或者用面向对象的方法理解，把研究的对象的某些特征提取出来作为类的属性。每一个样本也就是一个类的实例，所有对象的集合就是数据集。</p></blockquote><p>一般地，令$D = { x_1,x_2,x_3,…,x_m } $ 表示包含 <strong>$m$</strong>个样本的数据集，每个示例由 <strong>$d$</strong> 个属性描述， 则每个样本 $x_i = (x_{i1},x_{i2},x_{i3},…,x_{id})$ 是 $d$ 维样本空间 <strong>$\chi$</strong> 的一个向量(<strong>$x_i \in \chi$</strong>), 其中 $x_{ij}$ 是 $x_i$ 在第 $j$ 个属性上的取值，样本$x_i$的维数为$d$。</p><hr/><ul><li><strong>学习/训练</strong>：从数据中通过某种学习算法学得模型的过程称为“<strong>学习</strong>”（learning）或者“<strong>训练</strong>”（training）。</li><li>训练过程中使用的数据称为“<strong>训练数据</strong>”（training data），其中每一个样本称为一个“<strong>训练样本</strong>”（training sample），训练样本组成的集合叫做“<strong>训练集</strong>”（training set）。</li></ul><p>updating</p><hr/><h2 id="西瓜书pdf下载链接"><a href="#西瓜书pdf下载链接" class="headerlink" title="西瓜书pdf下载链接"></a>西瓜书pdf下载链接</h2><p><img src="1.png" alt=""></p><p>链接：<a href="https://pan.baidu.com/s/1-NKceuYl-3J-zxStrva6pQ" target="_blank">https://pan.baidu.com/s/1-NKceuYl-3J-zxStrva6pQ</a><br>提取码：hvis </p>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;作为一个对人工智能机器学习领域一无所知的小白，看到许多大神都在推荐周志华老师的《机器学习》这本书来入门。我也找到了这本书，想把这本书研究透彻，借助这本书成为迈进这个陌生的领域。正所谓不动笔墨不读书，我要在学习的同时，把读到的想到的学到的都记下来，才能更好地真正理解。希望能像前辈大神们那样，坚持读完这本书（并记下属于自己的西瓜书笔记）。&lt;br&gt;就像书里说的那句&lt;code&gt;这学期狠下功夫，基础概念弄得清清楚楚，算法作业也是信手拈来，这门课成绩一定差不了！&lt;/code&gt;&lt;br&gt;加油!奥力给！&lt;/p&gt;
+&lt;h2 id=&quot;基本概念&quot;&gt;&lt;a href=&quot;#基本概念&quot; class=&quot;headerlink&quot; title=&quot;基本概念&quot;&gt;&lt;/a&gt;基本概念&lt;/h2&gt;
+    
+    </summary>
+    
+    
+      <category term="机器学习" scheme="https://yanghaku.github.io/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
+    
+    
+      <category term="机器学习" scheme="https://yanghaku.github.io/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
   
   <entry>
     <title>Xamarin.Android 运行原理</title>
