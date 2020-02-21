@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/font-awesome@4/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://yanghaku.github.io').hostname,
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":true,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: true,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="使用自定义python脚本，自动利用mininet构建虚拟网络并且设置sflow-rt流量监控，ryu为控制器。 架构：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SDN中简单模拟DDOS检测与防御">
+<meta property="og:url" content="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/index.html">
+<meta property="og:site_name" content="YangBo">
+<meta property="og:description" content="使用自定义python脚本，自动利用mininet构建虚拟网络并且设置sflow-rt流量监控，ryu为控制器。 架构：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/a.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/1.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/3.png">
+<meta property="og:image" content="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/4.png">
+<meta property="article:published_time" content="2020-02-21T03:20:00.000Z">
+<meta property="article:modified_time" content="2020-02-21T12:38:17.716Z">
+<meta property="article:author" content="杨博">
+<meta property="article:tag" content="SDN">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/a.png">
+
+<link rel="canonical" href="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>SDN中简单模拟DDOS检测与防御 | YangBo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="YangBo" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">YangBo</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">奋斗才能拥有最美丽的人生</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">7</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">17</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yanghaku" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="杨博">
+      <meta itemprop="description" content="一个快废掉的咸鱼罢了">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangBo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SDN中简单模拟DDOS检测与防御
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-21 11:20:00 / 修改时间：20:38:17" itemprop="dateCreated datePublished" datetime="2020-02-21T11:20:00+08:00">2020-02-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SDN/" itemprop="url" rel="index">
+                    <span itemprop="name">SDN</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>使用自定义python脚本，自动利用mininet构建虚拟网络并且设置sflow-rt流量监控，ryu为控制器。</p>
+<h2 id="架构："><a href="#架构：" class="headerlink" title="架构："></a>架构：</h2><a id="more"></a>
+<p><img src="a.png" alt="a.png"></p>
+<p>从上图中可以看到，mininet基于OVS构建出网络之后，由ryu通过南向协议控制，交换机设置sFlow agent之后，采集的flow信息传给sflow-rt收集，然后用户通过REST API实现与ryu和sflow-rt进行通信，从sflow-rt获取流量信息或者向ryu请求添加/删除某些流表。</p>
+<hr/>
+
+<h3 id="REST-API-介绍"><a href="#REST-API-介绍" class="headerlink" title="REST API 介绍"></a>REST API 介绍</h3><p>REST是Representational State Transfer（表现层状态转移）的缩写，它是由罗伊·菲尔丁（Roy Fielding）提出的，是用来描述创建HTTP API的标准方法的，他发现这四种常用的行为（查看（view），创建（create），编辑（edit）和删除（delete））都可以直接映射到HTTP 中已实现的GET,POST,PUT和DELETE方法。<br>REST API也就是通过HTTP协议实现规定了这四大行为，实现“表现层的状态转化”。每一个URL对应着一个资源，客户与服务端之间传递某种资源的表现层。返回的数据的形式可以是html，json，xml等。</p>
+<p>ryu的app实现了某些REST API，默认的端口是8080，sFlow-rt实现的的默认端口是8008<br>比如说ryu的ofctl_rest.py 里面实现的REST API，在源码里都有对应介绍（详见最下面的附录）。<br>sflow-rt的API（需要启动sflow-rt后查看） <a href="http://(sflow_rt_IP):8008/api/index.html">http://(sflow_rt_IP):8008/api/index.html</a></p>
+<p>访问这些api就通过http请求即可<br>比如用python的request库或者命令行curl</p>
+<p>例：curl查看sflow agent</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">yb@sdn-server:~$ curl http:/127.0.0.1:8008/agents/json</span><br><span class="line">&#123;<span class="string">"127.0.0.1"</span>: &#123;</span><br><span class="line"> <span class="string">"sFlowDatagramsLost"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowDatagramSource"</span>: [<span class="string">"127.0.0.1"</span>],</span><br><span class="line"> <span class="string">"firstSeen"</span>: 1137756,</span><br><span class="line"> <span class="string">"sFlowFlowDuplicateSamples"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowDatagramsReceived"</span>: 451732,</span><br><span class="line"> <span class="string">"sFlowCounterDatasources"</span>: 9,</span><br><span class="line"> <span class="string">"sFlowFlowOutOfOrderSamples"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowFlowSamples"</span>: 4506494,</span><br><span class="line"> <span class="string">"sFlowDatagramsOutOfOrder"</span>: 2,</span><br><span class="line"> <span class="string">"uptime"</span>: 973000,</span><br><span class="line"> <span class="string">"sFlowCounterDuplicateSamples"</span>: 0,</span><br><span class="line"> <span class="string">"lastSeen"</span>: 156756,</span><br><span class="line"> <span class="string">"sFlowDatagramsDuplicates"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowFlowDrops"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowFlowLostSamples"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowCounterSamples"</span>: 867,</span><br><span class="line"> <span class="string">"sFlowCounterLostSamples"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowFlowDatasources"</span>: 7,</span><br><span class="line"> <span class="string">"sFlowCounterOutOfOrderSamples"</span>: 0</span><br><span class="line">&#125;&#125;</span><br><span class="line">yb@sdn-server:~$</span><br></pre></td></tr></table></figure>
+<h3 id="工具的默认端口："><a href="#工具的默认端口：" class="headerlink" title="工具的默认端口："></a>工具的默认端口：</h3><ul>
+<li>控制器：6653，6633</li>
+<li>控制器REST API：8080</li>
+<li>sflow agent：6343</li>
+<li>sflow-rt REST API：8008</li>
+</ul>
+<p>下面就是具体操作了：</p>
+<hr/>
+
+
+<h2 id="启动sflow-rt"><a href="#启动sflow-rt" class="headerlink" title="启动sflow-rt"></a>启动sflow-rt</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">yb@sdn-server:~$ ./sflow-rt/start.sh</span><br><span class="line">2020-02-21T03:14:32Z INFO: Starting sFlow-RT 3.0-1448</span><br><span class="line">2020-02-21T03:14:36Z INFO: Version check, 3.0-1469 available</span><br><span class="line">2020-02-21T03:14:36Z INFO: Listening, sFlow port 6343</span><br><span class="line">2020-02-21T03:14:36Z INFO: Listening, HTTP port 8008</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/mininet-dashboard/scripts/metrics.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/dashboard-example/scripts/metrics.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/flow-graph/scripts/graph.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/world-map/scripts/countries.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/flow-trend/scripts/top.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/ix-metrics/scripts/metrics.js started</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>此时sflow监听开启</p>
+<h2 id="启动ryu"><a href="#启动ryu" class="headerlink" title="启动ryu"></a>启动ryu</h2><p>在这里需要用到ryu的两个app:<br>simple_switch_13.py 实现交换机(OpenFlow1.3协议)的转发功能<br>ofctl_rest.py 用于通过REST API进行添加/删除流表，实现阻止DDOS的流量<br>两个都在ryu安装目录的app里面</p>
+<p>启动：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">yb@sdn-server:~$ ryu-manager ryu/app/simple_switch_13.py ryu/app/ofctl_rest.p y</span><br><span class="line">loading app ryu/app/simple_switch_13.py</span><br><span class="line">loading app ryu/app/ofctl_rest.py</span><br><span class="line">loading app ryu.controller.ofp_handler</span><br><span class="line">instantiating app None of DPSet</span><br><span class="line">creating context dpset</span><br><span class="line">creating context wsgi</span><br><span class="line">instantiating app ryu/app/simple_switch_13.py of SimpleSwitch13</span><br><span class="line">instantiating app ryu.controller.ofp_handler of OFPHandler</span><br><span class="line">instantiating app ryu/app/ofctl_rest.py of RestStatsApi</span><br><span class="line">(10379) wsgi starting up on http://0.0.0.0:8080</span><br><span class="line">...</span><br></pre></td></tr></table></figure></p>
+<h2 id="启动mininet构建虚拟网络"><a href="#启动mininet构建虚拟网络" class="headerlink" title="启动mininet构建虚拟网络"></a>启动mininet构建虚拟网络</h2><p>这个是最关键的，使用python脚本，实现自定义的拓扑，并且将每个交换机都设置好控制器和sflow代理。</p>
+<blockquote>
+<p>如果不需要自定义的话，简单一个命令就可以搞定， —custom来设定的sflow-rt/extras里面的sflow.py就是可以自动将mininet里的交换机设置代理。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo mn --controller=remote,ip=127.0.0.1,port=6633 --custom</span><br><span class="line">sflow-rt/extras/sflow.py --switch ovs,protocols=OpenFlow13</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>但是，为了可以实现复杂的网络拓扑，还有其他特性的设置，编写自定义的脚本还是非常非常重要的。</p>
+<p>下面就是实现的一个自定义脚本：</p>
+<p>首先是实现一个自定义的拓扑类（继承mininet.topo.Topo）,构造函数的参数是交换机的个数和主机个数，建边的函数就决定了拓扑的复杂性（这里只是简单测试，所以写的建边函数只是线性连接的）。</p>
+<p>customTopology.py(具体看注释):<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># coding:utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> mininet.topo <span class="keyword">import</span> Topo</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义拓扑类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CustomTopology</span><span class="params">(Topo)</span>:</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 构造函数,s_num为交换机个数,h_num为主机个数</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, switch_num, host_num)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> <span class="string">'*** Class CustomTopology init'</span></span><br><span class="line"></span><br><span class="line">        self.switch_list = []  <span class="comment"># 交换机列表初始化</span></span><br><span class="line">        self.host_list = []  <span class="comment"># 主机列表初始化</span></span><br><span class="line">        Topo.__init__(self)  <span class="comment"># 父类构造函数</span></span><br><span class="line">        self.create_nodes(switch_num, host_num)  <span class="comment"># 创建节点</span></span><br><span class="line">        self.create_links()  <span class="comment"># 创建链路</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">print</span> <span class="string">'*** Class CustomTopology init Success'</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 创建节点的函数</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">create_nodes</span><span class="params">(self, switch_num, host_num)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> <span class="string">'*** Add switches and hosts to Topology'</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> xrange(<span class="number">1</span>, switch_num + <span class="number">1</span>):</span><br><span class="line">            self.switch_list.append(self.addSwitch(<span class="string">"s%d"</span> % i))</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> xrange(<span class="number">1</span>, host_num + <span class="number">1</span>):</span><br><span class="line">            self.host_list.append(self.addHost(<span class="string">'h%d'</span> % i))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 创建链路的函数, 建边函数决定了自定义拓扑的复杂度</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">create_links</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> <span class="string">'*** Add links to Topology'</span></span><br><span class="line">        self.addLink(self.switch_list[<span class="number">0</span>],self.switch_list[<span class="number">1</span>])</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> xrange(len(self.host_list)):</span><br><span class="line">            <span class="keyword">if</span> i &lt; <span class="number">2</span>:</span><br><span class="line">                self.addLink(self.switch_list[<span class="number">0</span>], self.host_list[i])</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                self.addLink(self.switch_list[<span class="number">1</span>], self.host_list[i])</span><br></pre></td></tr></table></figure></p>
+<p>然后就是创建网络的脚本了，需要import上面的<code>customTopology.py</code><br>具体顺序是：创建拓扑 -&gt; 根据拓扑创建网络 -&gt; 将交换机openflow协议设置成1.3版本 -&gt; 设置sflow代理，将所有交换机加入代理 -&gt; 将mininet的拓扑通过REST API发送给sflow-rt -&gt; 创建完成，打开mininet的CLI。</p>
+<p>具体可以看代码createNet.py:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># coding:utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Mininet自定义脚本</span></span><br><span class="line"><span class="string">通过Mininet的API实现构建自定义网络，并设置sflow代理</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> mininet.net <span class="keyword">import</span> Mininet</span><br><span class="line"><span class="keyword">from</span> mininet.node <span class="keyword">import</span> RemoteController</span><br><span class="line"><span class="keyword">from</span> mininet.cli <span class="keyword">import</span> CLI</span><br><span class="line"><span class="keyword">from</span> mininet.link <span class="keyword">import</span> TCLink</span><br><span class="line"><span class="keyword">from</span> mininet.util <span class="keyword">import</span> quietRun, customClass</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> requests  <span class="comment"># 导入request，通过REST API 与 sflow-rt 通信</span></span><br><span class="line"><span class="keyword">from</span> customTopology <span class="keyword">import</span> CustomTopology  <span class="comment"># 导入自定义的拓扑类</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置交换机的OpenFlow协议版本</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configOpenFlow</span><span class="params">(net, protocol)</span>:</span></span><br><span class="line">    <span class="keyword">print</span> <span class="string">'*** set ovs protocols ='</span> + protocol</span><br><span class="line">    cmd = <span class="string">'ovs-vsctl set bridge %s protocols='</span> + protocol</span><br><span class="line">    <span class="keyword">for</span> s <span class="keyword">in</span> net.switches:</span><br><span class="line">        quietRun(cmd % s)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置sflow agent</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configSFlow</span><span class="params">(net, agent_ifname, collector, sampling, polling)</span>:</span></span><br><span class="line">    <span class="keyword">print</span> <span class="string">'*** config SFlow agent'</span></span><br><span class="line">    cmd = <span class="string">'ovs-vsctl -- --id=@sflow create sflow agent=%s target=%s sampling=%d polling=%d --'</span> % \</span><br><span class="line">          (agent_ifname, collector, sampling, polling)</span><br><span class="line">    <span class="keyword">for</span> s <span class="keyword">in</span> net.switches:</span><br><span class="line">        cmd += <span class="string">' -- set bridge %s sflow=@sflow'</span> % s</span><br><span class="line">    quietRun(cmd)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 向sFlow-rt 发送当前拓扑</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">sendTopology</span><span class="params">(net, agent_ip, collector)</span>:</span></span><br><span class="line">    <span class="keyword">print</span> <span class="string">"*** Sending topology"</span></span><br><span class="line">    nodes = &#123;&#125;</span><br><span class="line">    links = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> s <span class="keyword">in</span> net.switches:</span><br><span class="line">        nodes[s.name] = &#123;<span class="string">'agent'</span>: agent_ip, <span class="string">'ports'</span>: &#123;&#125;&#125;</span><br><span class="line">    path = <span class="string">'/sys/devices/virtual/net/'</span>  <span class="comment"># 虚拟网络存储的位置</span></span><br><span class="line">    pattern = re.compile(<span class="string">'(^.+)-(.+)'</span>)  <span class="comment"># 编译正则表达式，用于匹配所有 s1-eth1 这种设备</span></span><br><span class="line">    <span class="keyword">for</span> child <span class="keyword">in</span> os.listdir(path):  <span class="comment"># 遍历这个文件夹， 获取每个交换机的端口</span></span><br><span class="line">        parts = pattern.match(child)</span><br><span class="line">        <span class="comment"># 如果存在匹配并且交换机在node列表里，就加入配置</span></span><br><span class="line">        <span class="comment"># 比如s1-eth1, parts.group(0)='s1-eth1' , parts.group(1)='s1', parts.group(2)='eth1'</span></span><br><span class="line">        <span class="keyword">if</span> parts <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span> <span class="keyword">and</span> parts.group(<span class="number">1</span>) <span class="keyword">in</span> nodes:</span><br><span class="line">            <span class="comment"># 获取端口的id</span></span><br><span class="line">            ifindex = open(path + child + <span class="string">'/ifindex'</span>).read().strip(<span class="string">'\n'</span>)</span><br><span class="line">            nodes[parts.group(<span class="number">1</span>)][<span class="string">'ports'</span>][child] = &#123;<span class="string">'ifindex'</span>: ifindex&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 统计交换机两两之间是不是有连接link</span></span><br><span class="line">    length = len(net.switches)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> xrange(length):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> xrange(i + <span class="number">1</span>, length):</span><br><span class="line">            s1 = net.switches[i]</span><br><span class="line">            s2 = net.switches[j]</span><br><span class="line">            intfs = s1.connectionsTo(s2)  <span class="comment"># 两个交换机直接的连接</span></span><br><span class="line">            <span class="keyword">for</span> intf <span class="keyword">in</span> intfs:</span><br><span class="line">                link = <span class="string">'%s-%s'</span> % (s1.name, s2.name)</span><br><span class="line">                links[link] = &#123;</span><br><span class="line">                    <span class="string">'node1'</span>: s1.name,</span><br><span class="line">                    <span class="string">'node2'</span>: s2.name,</span><br><span class="line">                    <span class="string">'port1'</span>: intf[<span class="number">0</span>].name,  <span class="comment"># 两个端口，一个属于s1，一个属于s2</span></span><br><span class="line">                    <span class="string">'port2'</span>: intf[<span class="number">1</span>].name</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 向sFlow-rt 发送拓扑信息， sFlow-rt 端口默认8008</span></span><br><span class="line">    requests.put(<span class="string">'http://%s:8008/topology/json'</span> % collector, json=&#123;<span class="string">'nodes'</span>: nodes, <span class="string">'links'</span>: links&#125;)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建网络的主函数, 参数分别是:控制器的ip, sFlow收集器(sFlow-rt)的ip, sFlow agent的网卡, Sflow agent的ip</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">createNet</span><span class="params">(controller_ip, sFlow_collector, sFlow_agent_ifname, sFlow_agent_ip)</span>:</span></span><br><span class="line">    <span class="comment"># 初始化拓扑</span></span><br><span class="line">    topology = CustomTopology(<span class="number">2</span>, <span class="number">4</span>)</span><br><span class="line">    <span class="comment"># Rate limit links to 10Mbps</span></span><br><span class="line">    link = customClass(&#123;<span class="string">'tc'</span>: TCLink&#125;, <span class="string">'tc,bw=10'</span>)</span><br><span class="line">    <span class="comment"># 根据初始化网络</span></span><br><span class="line">    net = Mininet(topo=topology, link=link, controller=<span class="literal">None</span>)</span><br><span class="line">    <span class="comment"># 增加控制器，控制器端口默认都是6633和6653</span></span><br><span class="line">    net.addController(<span class="string">'ryu-controller'</span>, controller=RemoteController, ip=controller_ip, port=<span class="number">6633</span>)</span><br><span class="line">    <span class="comment"># 启动网络</span></span><br><span class="line">    net.start()</span><br><span class="line">    <span class="comment"># 设置交换机的OpenFlow版本</span></span><br><span class="line">    configOpenFlow(net, <span class="string">'OpenFlow13'</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 设置sFlow agent</span></span><br><span class="line">    configSFlow(net, sFlow_agent_ifname, sFlow_collector, <span class="number">10</span>, <span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 向sFlow-rt 发送当前拓扑</span></span><br><span class="line">    sendTopology(net, sFlow_agent_ip, sFlow_collector)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 互相ping测试连通</span></span><br><span class="line">    net.pingAll()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 测试带宽</span></span><br><span class="line">    <span class="keyword">print</span> <span class="string">"*** Testing bandwidth between h1 and h4"</span></span><br><span class="line">    h1, h4 = net.get(<span class="string">'h1'</span>, <span class="string">'h4'</span>)</span><br><span class="line">    net.iperf((h1, h4))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 开启命令行</span></span><br><span class="line">    CLI(net)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 最后关闭网络</span></span><br><span class="line">    net.stop()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    <span class="keyword">if</span> os.getuid() != <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'You are not root!!'</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="comment"># 预先定义的变量</span></span><br><span class="line">        controller_ip = <span class="string">'127.0.0.1'</span></span><br><span class="line">        sFlow_collector = <span class="string">'127.0.0.1'</span></span><br><span class="line">        sFlow_agent_ifname = <span class="string">'lo'</span>  <span class="comment"># 因为虚拟网络和收集器是在同一个主机，所以直接用环回测试网卡做agent即可</span></span><br><span class="line">        sFlow_agent_ip = <span class="string">'127.0.0.1'</span></span><br><span class="line">        createNet(controller_ip, sFlow_collector, sFlow_agent_ifname, sFlow_agent_ip)</span><br></pre></td></tr></table></figure>
+<p>然后执行<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">chmod +x *.py</span><br><span class="line">sudo ./createNet.py</span><br></pre></td></tr></table></figure></p>
+<p>输出：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">yb@sdn-server:~/code$ sudo ./createNet.py</span><br><span class="line">*** Class CustomTopology init</span><br><span class="line">*** Add switches and hosts to Topology</span><br><span class="line">*** Add links to Topology</span><br><span class="line">*** Class CustomTopology init Success</span><br><span class="line">*** <span class="built_in">set</span> ovs protocols =OpenFlow13</span><br><span class="line">*** config SFlow agent</span><br><span class="line">*** Sending topology</span><br><span class="line">*** Ping: testing ping reachability</span><br><span class="line">h1 -&gt; h2 h3 h4</span><br><span class="line">h2 -&gt; h1 h3 h4</span><br><span class="line">h3 -&gt; h1 h2 h4</span><br><span class="line">h4 -&gt; h1 h2 h3</span><br><span class="line">*** Results: 0% dropped (12/12 received)</span><br><span class="line">*** Testing bandwidth between h1 and h4</span><br><span class="line">*** Iperf: testing TCP bandwidth between h1 and h4</span><br><span class="line">*** Results: [<span class="string">'9.34 Mbits/sec'</span>, <span class="string">'10.0 Mbits/sec'</span>]</span><br><span class="line">mininet&gt; </span><br><span class="line">...</span><br></pre></td></tr></table></figure></p>
+<p>脚本产生了一个4个host，2个switch的网络，s1连接着h1,h2,s2连接着h3,h4，s1和s2连接。</p>
+<p>这个时候，就可以用浏览器打开sflow-rt的ip:8008, 点开任意的app可以看到对应监控的信息了,比如点开dashboard-example：</p>
+<p><img src="1.png" alt=""></p>
+<h2 id="流量检测与处理脚本"><a href="#流量检测与处理脚本" class="headerlink" title="流量检测与处理脚本"></a>流量检测与处理脚本</h2><p>接下来就是通过sflow-rt获取流量数据进行处理判断了。<br>流程是：在sflow-rt 定义一个流，然后注册这个流的阈值，这个流超过阈值的时候sflow-rt就会生成对应的事件，然后脚本一直等待得到这个事件，得到后进行处理即可。</p>
+<p>假设模拟的是UDP的泛洪攻击（源端口不变）的检测与防御，那么就向sflow-rt 定义监控 目的ip和源udp端口两个特征。<br>如果超过了这个值，那么就向ryu控制器发送信息（也是通过REST API），增加一个流表项：将这个流的处理动作变成drop，就实现了一次防御。</p>
+<p>具体可以看代码和注释 ddosDection.py：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># coding:utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="string">构建网络后, 通过REST API从sFlow-rt获取flow信息, 发现ddos攻击的时候, 通过REST API给控制器信息修改流表，实现防御</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">测试udp</span></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 处理事件的函数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">handle</span><span class="params">(controller_ip, event)</span>:</span></span><br><span class="line">    ryu = <span class="string">'http://'</span> + controller_ip + <span class="string">':8080/'</span>  <span class="comment"># ryu的默认端口是8080</span></span><br><span class="line">    flowKey = event[<span class="string">'flowKey'</span>]</span><br><span class="line">    dest_ip, source_udp = flowKey.split(<span class="string">','</span>)</span><br><span class="line">    msg = &#123;  <span class="comment"># 定义向控制器发送的信息，添加新的流表项</span></span><br><span class="line">        <span class="string">"dpid"</span>: <span class="number">1</span>,  <span class="comment"># Datapath ID</span></span><br><span class="line">        <span class="comment"># 没有action，默认就是丢掉</span></span><br><span class="line">        <span class="string">'priority'</span>: <span class="number">4000</span>,  <span class="comment"># 优先级调到最高</span></span><br><span class="line">        <span class="string">"hard_timeout"</span>: <span class="number">120</span>,  <span class="comment"># 设置硬生存时间，使当前阻塞只持续两分钟</span></span><br><span class="line">        <span class="string">"match"</span>: &#123;  <span class="comment"># 流表项的匹配域</span></span><br><span class="line">            <span class="string">"dl_type"</span>: <span class="number">0x800</span>,  <span class="comment"># 以太网头的类型0x80，也就是ip协议</span></span><br><span class="line">            <span class="string">"nw_dst"</span>: dest_ip + <span class="string">'/32'</span>,  <span class="comment"># 目的ip</span></span><br><span class="line">            <span class="string">"nw_proto"</span>: <span class="number">17</span>,  <span class="comment"># ip 头的协议类型17， 也就是udp</span></span><br><span class="line">            <span class="string">"tp_src"</span>: source_udp  <span class="comment"># udp的源端口</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    r = requests.post(ryu + <span class="string">'stats/flowentry/add'</span>, data=json.dumps(msg))</span><br><span class="line">    <span class="keyword">if</span> r.status_code == <span class="number">200</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'handle event: blocking the flowKey=%s\n'</span> % flowKey</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'handle event %s fail\n'</span> % flowKey</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行的主函数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(controller_ip, collector_ip)</span>:</span></span><br><span class="line">    rt = <span class="string">'http://'</span> + collector_ip + <span class="string">':8008'</span>  <span class="comment"># sFlow-rt的默认端口是8008</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 定义一个流的信息, keys为记录的特征，现在设定是 ip目的地址，udp源端口</span></span><br><span class="line">    <span class="comment">#  value 设置的是统计单位为 帧</span></span><br><span class="line">    flow = &#123;<span class="string">'keys'</span>: <span class="string">'ipdestination,udpsourceport'</span>, <span class="string">'value'</span>: <span class="string">'frames'</span>&#125;</span><br><span class="line">    <span class="comment"># 设置流的名字是 udp_test_flow</span></span><br><span class="line">    flow_name = <span class="string">'udp_test_flow'</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 使用REST API 发送给sFlow-rt</span></span><br><span class="line">    status_code = requests.put(<span class="string">'%s/flow/%s/json'</span> % (rt, flow_name), data=json.dumps(flow)).status_code</span><br><span class="line">    <span class="keyword">if</span> status_code != <span class="number">204</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'PUT flow ERROR! status_code is '</span> + str(status_code)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 定义一个阈值信息作为度量值，如果超过了这个阈值就会生成事件发送过来</span></span><br><span class="line">    <span class="comment"># metric 为定义的流名字, value为阈值, byFlow是以流为统计基础</span></span><br><span class="line">    threshold = &#123;<span class="string">'metric'</span>: flow_name, <span class="string">'value'</span>: <span class="number">100</span>, <span class="string">'byFlow'</span>: <span class="literal">True</span>, <span class="string">'timeout'</span>: <span class="number">2</span>&#125;</span><br><span class="line">    <span class="comment"># 设置这个阈值事件的名字为 udp_test</span></span><br><span class="line">    threshold_name = <span class="string">'udp_test'</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 使用REST API 发送给sFlow-rt</span></span><br><span class="line">    status_code = requests.put(<span class="string">'%s/threshold/%s/json'</span> % (rt, threshold_name), data=json.dumps(threshold)).status_code</span><br><span class="line">    <span class="keyword">if</span> status_code != <span class="number">204</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'PUT threshold ERROR! status_code is '</span> + str(status_code)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 定义这个阈值之后，超过了就会生成一个事件，所以一直循环监控这个事件就可以了</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 事件的url, get参数里指明之前定义的阈值名字， 最大的返回事件个数等</span></span><br><span class="line">    event_url = <span class="string">'%s/events/json?thresholdID=%s&amp;maxEvents=10&amp;timeout=60'</span> % (rt, threshold_name)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># eventID 指明的是下一个接收的event 为 这个eventID 之后的，所以第一次的时候为 -1</span></span><br><span class="line">    eventID = <span class="number">-1</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">print</span> <span class="string">'listening event %s start'</span> % threshold_name</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        r = requests.get(event_url + <span class="string">'&amp;eventID='</span> + str(eventID))</span><br><span class="line">        <span class="keyword">if</span> r.status_code != <span class="number">200</span>:</span><br><span class="line">            <span class="keyword">print</span> <span class="string">'GET events Error! HTTP response code is '</span> + str(r.status_code)</span><br><span class="line">            <span class="keyword">print</span> r.text</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">        events = r.json()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> len(events) == <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># events 为json解析后的一个event的list，序号越小的eventID越大</span></span><br><span class="line">        eventID = events[<span class="number">0</span>][<span class="string">"eventID"</span>]</span><br><span class="line">        events.reverse()</span><br><span class="line">        <span class="keyword">for</span> e <span class="keyword">in</span> events:</span><br><span class="line">            <span class="keyword">print</span> <span class="string">'---------------------'</span></span><br><span class="line">            <span class="keyword">print</span> <span class="string">'time: '</span> + time.strftime(<span class="string">"%Y-%m-%d %H:%M:%S"</span>,</span><br><span class="line">                                           time.localtime(e[<span class="string">'timestamp'</span>] / <span class="number">1000</span>))  <span class="comment"># 毫秒级时间戳除以1000变成秒级</span></span><br><span class="line">            <span class="keyword">print</span> <span class="string">'event: id=%d, thresholdID=%s, metric=%s'</span> % (e[<span class="string">'eventID'</span>], e[<span class="string">'thresholdID'</span>], e[<span class="string">'metric'</span>])</span><br><span class="line">            <span class="keyword">print</span> <span class="string">'threshold = %d , value = %d'</span> % (e[<span class="string">'threshold'</span>], e[<span class="string">'value'</span>])</span><br><span class="line">            ip, udp = e[<span class="string">'flowKey'</span>].split(<span class="string">','</span>)</span><br><span class="line">            <span class="keyword">print</span> <span class="string">'flowKey: ipdestination = %s, udpsourceport = %s'</span> % (ip, udp)</span><br><span class="line">            <span class="keyword">print</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># 处理这个事件</span></span><br><span class="line">            handle(controller_ip, e)</span><br><span class="line"></span><br><span class="line">        time.sleep(<span class="number">1</span>)  <span class="comment"># 等待1s</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    run(<span class="string">'127.0.0.1'</span>, <span class="string">'127.0.0.1'</span>)</span><br></pre></td></tr></table></figure>
+<p>先在刚才mininet的CLI运行：<br>(hping3工具是可以模拟ddos工具，使用前需要先<code>sudo apt install hping3</code>)</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">h1 hping3 --flood --udp -k -s 53 h3</span><br></pre></td></tr></table></figure>
+<p>—flood 是尽可能快得发送， —udp是构造udp模式， -k 保持源端口 -s 53 基础源端口设置53</p>
+<p>然后再运行检测防御的脚本<code>python ddosDection.py</code><br>可以看到, 开始的时候出现流量暴增，当运行了脚本之后，流量下降一大半:<br><img src="3.png" alt=""></p>
+<p>脚本的输出：<br><img src="4.png" alt=""></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总之，实现了脚本自动构建网络，设置sflow代理等。</p>
+<p>在这个架构上，控制器ryu，sFlow收集器sflow-rt，mininet构建的虚拟网络都可以在不同的主机上，设置好ip地址即可。</p>
+<p>不足/需要完善的地方:</p>
+<ul>
+<li>sflow-rt 和 mininet搭建的网络还不能分散在不同的主机上（因为代理用的lo环回测试网卡）</li>
+<li>sflow-rt的REST API和ryu REST API调用还没有熟悉</li>
+</ul>
+<p>附： ryu/app/ofctl_rest.py 提供的REST API</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># REST API</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Retrieve the switch stats</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get the list of all switches</span></span><br><span class="line"><span class="comment"># GET /stats/switches</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get the desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/desc/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get flows desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/flowdesc/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get flows desc stats of the switch filtered by the fields</span></span><br><span class="line"><span class="comment"># POST /stats/flowdesc/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get flows stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/flow/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get flows stats of the switch filtered by the fields</span></span><br><span class="line"><span class="comment"># POST /stats/flow/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get aggregate flows stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/aggregateflow/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get aggregate flows stats of the switch filtered by the fields</span></span><br><span class="line"><span class="comment"># POST /stats/aggregateflow/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get table stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/table/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get table features stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/tablefeatures/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get ports stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/port/&lt;dpid&gt;[/&lt;port&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get queues stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/queue/&lt;dpid&gt;[/&lt;port&gt;[/&lt;queue_id&gt;]]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number and queue id are optional</span></span><br><span class="line"><span class="comment">#       If you want to omitting the port number and setting the queue id,</span></span><br><span class="line"><span class="comment">#       please specify the keyword "ALL" to the port number</span></span><br><span class="line"><span class="comment">#       e.g. GET /stats/queue/1/ALL/1</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get queues config stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/queueconfig/&lt;dpid&gt;[/&lt;port&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get queues desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/queuedesc/&lt;dpid&gt;[/&lt;port&gt;[/&lt;queue_id&gt;]]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number and queue id are optional</span></span><br><span class="line"><span class="comment">#       If you want to omitting the port number and setting the queue id,</span></span><br><span class="line"><span class="comment">#       please specify the keyword "ALL" to the port number</span></span><br><span class="line"><span class="comment">#       e.g. GET /stats/queuedesc/1/ALL/1</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get meter features stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/meterfeatures/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get meter config stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/meterconfig/&lt;dpid&gt;[/&lt;meter_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of meter id is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get meter desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/meterdesc/&lt;dpid&gt;[/&lt;meter_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of meter id is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get meters stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/meter/&lt;dpid&gt;[/&lt;meter_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of meter id is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get group features stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/groupfeatures/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get groups desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/groupdesc/&lt;dpid&gt;[/&lt;group_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of group id is optional (OpenFlow 1.5 or later)</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get groups stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/group/&lt;dpid&gt;[/&lt;group_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of group id is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get ports description of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/portdesc/&lt;dpid&gt;[/&lt;port_no&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number is optional (OpenFlow 1.5 or later)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Update the switch stats</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># add a flow entry</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/add</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify all matching flow entries</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/modify</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify flow entry strictly matching wildcards and priority</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/modify_strict</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete all matching flow entries</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/delete</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete flow entry strictly matching wildcards and priority</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/delete_strict</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete all flow entries of the switch</span></span><br><span class="line"><span class="comment"># DELETE /stats/flowentry/clear/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># add a meter entry</span></span><br><span class="line"><span class="comment"># POST /stats/meterentry/add</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify a meter entry</span></span><br><span class="line"><span class="comment"># POST /stats/meterentry/modify</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete a meter entry</span></span><br><span class="line"><span class="comment"># POST /stats/meterentry/delete</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># add a group entry</span></span><br><span class="line"><span class="comment"># POST /stats/groupentry/add</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify a group entry</span></span><br><span class="line"><span class="comment"># POST /stats/groupentry/modify</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete a group entry</span></span><br><span class="line"><span class="comment"># POST /stats/groupentry/delete</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify behavior of the physical port</span></span><br><span class="line"><span class="comment"># POST /stats/portdesc/modify</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify role of controller</span></span><br><span class="line"><span class="comment"># POST /stats/role</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># send a experimeter message</span></span><br><span class="line"><span class="comment"># POST /stats/experimenter/&lt;dpid&gt;</span></span><br></pre></td></tr></table></figure>
+<hr/>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/SDN/" rel="tag"><i class="fa fa-tag"></i> SDN</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/19/SDN%E5%AE%9E%E9%AA%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" rel="prev" title="SDN实验环境搭建">
+      <i class="fa fa-chevron-left"></i> SDN实验环境搭建
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#架构："><span class="nav-number">1.</span> <span class="nav-text">架构：</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#REST-API-介绍"><span class="nav-number">1.1.</span> <span class="nav-text">REST API 介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#工具的默认端口："><span class="nav-number">1.2.</span> <span class="nav-text">工具的默认端口：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#启动sflow-rt"><span class="nav-number">2.</span> <span class="nav-text">启动sflow-rt</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#启动ryu"><span class="nav-number">3.</span> <span class="nav-text">启动ryu</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#启动mininet构建虚拟网络"><span class="nav-number">4.</span> <span class="nav-text">启动mininet构建虚拟网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流量检测与处理脚本"><span class="nav-number">5.</span> <span class="nav-text">流量检测与处理脚本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杨博"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">杨博</p>
+  <div class="site-description" itemprop="description">一个快废掉的咸鱼罢了</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yanghaku" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yanghaku" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:1961882079@qq.com" title="E-Mail → mailto:1961882079@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨博</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='125' src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-nest@1/canvas-nest.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/medium-zoom@1/dist/medium-zoom.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+<script type="text/x-mathjax-config">
+    MathJax.Ajax.config.path['mhchem'] = '//cdn.jsdelivr.net/npm/mathjax-mhchem@3';
+
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        extensions: ['[mhchem]/mhchem.js'],
+      equationNumbers: {
+        autoNumber: 'AMS'
+      }
+    }
+  });
+
+  MathJax.Hub.Register.StartupHook('TeX Jax Ready', function() {
+    MathJax.InputJax.TeX.prefilterHooks.Add(function(data) {
+      if (data.display) {
+        var next = data.script.nextSibling;
+        while (next && next.nodeName.toLowerCase() === '#text') {
+          next = next.nextSibling;
+        }
+        if (next && next.nodeName.toLowerCase() === 'br') {
+          next.parentNode.removeChild(next);
+        }
+      }
+    });
+  });
+
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i = 0; i < all.length; i += 1) {
+      element = document.getElementById(all[i].inputID + '-Frame').parentNode;
+      if (element.nodeName.toLowerCase() == 'li') {
+        element = element.parentNode;
+      }
+      element.classList.add('has-jax');
+    }
+  });
+</script>
+<script>
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML', () => {
+    MathJax.Hub.Typeset();
+  }, window.MathJax);
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '55d1dd52dc07814ba5c8',
+      clientSecret: 'b538350d97925eb5f6561c743de17a14e7c53e2e',
+      repo: 'yanghaku.github.io',
+      owner: 'yanghaku',
+      admin: ['yanghaku'],
+      id: 'ce95aa39721e65c5df2986a742c065fa',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

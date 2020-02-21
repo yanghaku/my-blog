@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/font-awesome@4/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://yanghaku.github.io').hostname,
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":true,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: true,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="传统网络设备的功能模块在生产时就已经固定，只支持有限的用户配置，而不支持用户自定义编程。在传统的路由器和交换机的转发处理都是协议相关的，每个模块都是为了特定的网络协议而设计的，一旦设计完成就只能处理固定格式的网络数据包，无法根据用户需求来支持新的网络协议。所以SDN才有了数控分离的设计，提供了可编程能力。在SDN中，决定网络可编程能力的因素在于数据平面可编程，只有数据平面有了足够的可编程能力，控制">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SDN架构与实现3--SDN数据平面与交换机">
+<meta property="og:url" content="https://yanghaku.github.io/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/index.html">
+<meta property="og:site_name" content="YangBo">
+<meta property="og:description" content="传统网络设备的功能模块在生产时就已经固定，只支持有限的用户配置，而不支持用户自定义编程。在传统的路由器和交换机的转发处理都是协议相关的，每个模块都是为了特定的网络协议而设计的，一旦设计完成就只能处理固定格式的网络数据包，无法根据用户需求来支持新的网络协议。所以SDN才有了数控分离的设计，提供了可编程能力。在SDN中，决定网络可编程能力的因素在于数据平面可编程，只有数据平面有了足够的可编程能力，控制">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-19T10:25:00.000Z">
+<meta property="article:modified_time" content="2020-02-19T06:32:39.786Z">
+<meta property="article:author" content="杨博">
+<meta property="article:tag" content="SDN">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://yanghaku.github.io/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>SDN架构与实现3--SDN数据平面与交换机 | YangBo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="YangBo" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">YangBo</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">奋斗才能拥有最美丽的人生</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">7</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">17</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yanghaku" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanghaku.github.io/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="杨博">
+      <meta itemprop="description" content="一个快废掉的咸鱼罢了">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangBo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SDN架构与实现3--SDN数据平面与交换机
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-19 18:25:00 / 修改时间：14:32:39" itemprop="dateCreated datePublished" datetime="2020-02-19T18:25:00+08:00">2020-02-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SDN/" itemprop="url" rel="index">
+                    <span itemprop="name">SDN</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>传统网络设备的功能模块在生产时就已经固定，只支持有限的用户配置，而不支持用户自定义编程。在传统的路由器和交换机的转发处理都是协议相关的，每个模块都是为了特定的网络协议而设计的，一旦设计完成就只能处理固定格式的网络数据包，无法根据用户需求来支持新的网络协议。所以SDN才有了数控分离的设计，提供了可编程能力。在SDN中，决定网络可编程能力的因素在于数据平面可编程，只有数据平面有了足够的可编程能力，控制平面才能通过南向接口来对网络进行灵活的编程控制。</p>
+<a id="more"></a>
+<p>通用的可编程数据平面支持网络用户通过软件编程的方式任意定义数据平面的功能，包括数据包的解析和数据包的处理等功能，可以实现真正意义上的软件定义网络。为了提供更好的拓展性，通用可编程数据平面设备中所有的网络处理模块，包括包解析器、包转发和包调度，都是可以可编程重配置或者协议无关的，都具有足够的可编程能力。<br>理想的转发模型应该具有以下三个条件：</p>
+<ol>
+<li>清晰的软硬件接口</li>
+<li>简介的硬件接口</li>
+<li>灵活有效的功能实现</li>
+</ol>
+<p><em>The McKeown Group</em>在这个基础上定义了一种可编程通用转发抽象模型：OpenFlow Switch。在SDN可编程数据平面的发展过程中，OpenFlow Switch通用转发模型是现在通用可编程数据平面的代表。到目前为止，业界主流的SDN硬件交换机都实现了OpenFlow Switch通用转发模型的支持，还有业界使用最多的开源软件交换机Openvswitch。</p>
+<h2 id="通用可编程转发模型"><a href="#通用可编程转发模型" class="headerlink" title="通用可编程转发模型"></a>通用可编程转发模型</h2><p>OpenFlow Switch将网络数据转发处理抽象成通用的Match-Action过程，同时对网络系统中各种查找表进行了通用化处理，抽象成一种新的通用表转发模型结构。每个流表都可以实现用户定义的网格处理功能，从而实现可编程的网络数据转发处理。这种模型有四个特征：</p>
+<ol>
+<li>转发行文由控制平面指定</li>
+<li>由基础转发原语组成</li>
+<li>支撑高性能和低功耗</li>
+<li>避免厂商锁定控制程序</li>
+</ol>
+<p>OpenFlow Switch模型主要包括“通用硬件模型”和“通用处理指令”两部分，通用硬件模型由一组网络通用硬件子模型组成。通用处理指令包含了一组用户可编程的网络处理操作和处理指令。</p>
+<h3 id="通用硬件模型"><a href="#通用硬件模型" class="headerlink" title="通用硬件模型"></a>通用硬件模型</h3><p>通用的硬件模型处理流程为：数据包从某个端口进入 $\rightarrow$ 通用模型的协议解析模块完成包头分析 $\rightarrow$ 根据分析结果选择对应的流表处理。<br>在流表内部，解析出的数据包会与每个表项进行比较。如果匹配到了，就执行相应的指令，否则就会按照相应的指令丢弃或者转发给控制器。</p>
+<p>网络通用的处理指令分为三种类型：操作指令、跳转指令和专用指令。操作指令通常是对数据包的具体操作，比如修改转发丢弃等；跳转指令实现在多个流表直接的跳转；专用指令实现某种特定的网络数据流的处理。完成处理之后，将数据包从某个指定端口发出去。</p>
+<h4 id="流水线处理"><a href="#流水线处理" class="headerlink" title="流水线处理"></a>流水线处理</h4><p>“多级流表”优势：因为现有的交换芯片内部通常有多个查找表，比如二层转发表，三层路由表和访问接入控制等，“多级流表”的概念使得芯片更容易支持，资源利用率也高。多个网络应用会根据不同包头域组合，对数据包进行关联处理。并且单一流表会使表非常大，信息冗余。<br>在支持多级流表的OpenFlow Switch通用硬件模型中，每个数据包在进入流水线之前，都将分配一个对应的操作指令集。然后从第0个流表开始，匹配查找，根据定义的操作传给下一个流表或者执行对数据包的处理。</p>
+<h4 id="流表"><a href="#流表" class="headerlink" title="流表"></a>流表</h4><p>OpenFlow Switch通过流（flow）的概念来描述具有相同特征的数据包集合。然后对于flow的处理，OpenFlow Switch定义了流表项（flow Entry）来处理对应的数据流。每个流表有多个流表项组成，用户通过对这些表项进行编程区分flow，同时定义对应的处理指令。<br>每个流表项主要内容有：匹配域，指令集，计数器，优先级，失效时间，cookie，flags等</p>
+<ul>
+<li>匹配域：用来与每个数据包的指定包头标识集合进行比较，包括输入端口，包头标识域和Metadata三部分。</li>
+<li>指令集：指定该flow中的数据包的跳转操作，同时也包括对流表项的操作指令</li>
+<li>计数器：实时统计与流表项匹配成功的数据包数目信息，是分析用户流量的关键信息</li>
+<li>优先级：说明该流表的匹配优先级，当数据包与多个流表项匹配成功时，需要按照优先级来选择出一个流表项。</li>
+<li>失效时间： 指定流表项的失效时间。包括硬生存时间和软生存时间。硬生存时间是超过这个时间就被删除。软生存时间是在规定时间内没有匹配到数据包就被删除。</li>
+</ul>
+<p>在流水线中，流表的跳转指令只能沿着流水线方向进行处理，而不能回退到之前的流表。当流表没有跳转指令时，就对数据包进行具体的操作。所以流水线的最后一个流表不能有跳转指令，从而停止流水线。</p>
+<p>流表子模型本质上是一个面向flow的转发表。</p>
+<h4 id="组表"><a href="#组表" class="headerlink" title="组表"></a>组表</h4><p>组表是一种转发表的抽象子模型，具备给一组端口定义某种指定操作的抽象能力，从而便捷实现组播，负载均衡，重定向等功能。</p>
+<p>每个流表项包括：组号（Group Identifier），计数器（Counters），组类型（Group Type），操作桶（Action Buckets）。<br>组类型有四种：</p>
+<ul>
+<li>全选类型（All）：执行Action Buckets里所有的操作动作集，可以用来实现网络中的组播和广播功能。对应的flow数据包会直接复制到每个Action Bucket里。如果某个Action Buckets将数据包直接转发给输入端口就不复制这个包。</li>
+<li>选择类型（Select）：只选择执行一个Action Buckets的动作集，通常用交换机自己的算法来选择。</li>
+<li>间接类型（Indirect）：只能支持一个Action Buckets，用来实现多个流表项或多个组表项指向单一组表ID的情况。</li>
+<li>快速恢复类型（Fast Failover）：只执行第一个激活的Action Bucket。能让转发模型自己调整转发操作，不需要每次请求控制器。多用于容灾备份的场景。</li>
+</ul>
+<p>组表子模型也是一种转发表，只是表项定义与流表的内容不同。</p>
+<h4 id="Meter表"><a href="#Meter表" class="headerlink" title="Meter表"></a>Meter表</h4><p>Meter表是第三种转发表类型的抽象子模型，其使得OpenFlow Switch模型具备测量Flow的能力，可以用来实现速率控制等简单的Qos服务，也可以实现相对复杂的Qos服务。</p>
+<p>每个Meter表项由三个部分：计量标识（Meter Idendifier），计数器（Counters），计量带（Meter Bands）。<br>每一个计量带有bandtype，rate，counters和band type可选参数四部分组成。rate为一个网络数据流的传输速率阈值。Band Type定义了一种对应的包处理方式，通常只有网络数据流当前流量速率超过这个速率阈值时，才会执行BandType的操作。</p>
+<h4 id="状态信息表"><a href="#状态信息表" class="headerlink" title="状态信息表"></a>状态信息表</h4><p>OPenFlow模型里面定义了大量的计数器，分别由流表、流表项、端口、队列、Group、Group Bucket、Meter和计量带维护着。这些计数器合起来就构成了一个状态信息表。其中有一个特殊的计数器Duration计数器，记录流表项、端口、队列、Group和Meter的存活时间，精度通常是纳秒。计数器的实现可以用软件，也可以用硬件。</p>
+<h4 id="端口"><a href="#端口" class="headerlink" title="端口"></a>端口</h4><p>端口子模型是网络设备常见的模型，是其他网络设备和OpenFlow Switch的网络接口，通用硬件模型通过端口连接在一起（逻辑上的连接）。<br>OpenFlow Switch模型定义了物理端口（Physical Port）、逻辑端口（Logical Port）和保留端口（Reserved Port）三种端口类型。所有物理端口、逻辑端口和保留端口中的本地类型统称为标准端口，只有这些端口才能用作网络数据包的输入和输出端口，才能在组表中使用并且拥有端口计数器、端口状态和配置信息。<br>物理端口是物理网络中的真实网络接口，与网络中的物理接口一一对应；逻辑端口是一种抽象的端口，用作描述链路聚合组、隧道和回环接口等逻辑概念；保留端口是OpenFlow Switch模型中预留的虚拟端口类型。</p>
+<p>总之，OpenFlow Switch通用硬件模型定义了一组抽象的子模型来描述这个网络通用转发模型。其中包括三种特殊的转发表（流表、组表、Meter表），计数器组成的状态信息表和端口子模型。</p>
+<h3 id="通用处理指令"><a href="#通用处理指令" class="headerlink" title="通用处理指令"></a>通用处理指令</h3><p>OpenFlow Switch通用处理指令包括：网络处理控制指令Instructions，网络数据操作指令Actions和专用网络处理指令三部分。</p>
+<h4 id="网络处理控制指令"><a href="#网络处理控制指令" class="headerlink" title="网络处理控制指令"></a>网络处理控制指令</h4><p>OpenFlow Switch定义的第一种是基于Flow的网络处理流程控制指令Instructions，这种指令控制数据包在通用硬件模型流水线上的处理流程。<br>控制指令有两种：</p>
+<ol>
+<li>对Flow数据包的操作指令集的写入，应用删除等修改操作指令，比如写操作（Write-Actions），应用操作指令（Apply-Actions）。</li>
+<li>指定flow数据包在多个表中的处理顺序和跳转指令，比如Goto-Table指令。</li>
+</ol>
+<p>每个流表项包括多个控制指令，组成对应的指令集和。</p>
+<h4 id="操作指令"><a href="#操作指令" class="headerlink" title="操作指令"></a>操作指令</h4><p>OpenFlow Switch定义的第二种是基于Flow的网络处理操作指令Actions。这种操作指令完成对数据包的丢弃、复制、转发和修改等操作。每一个数据包进入流水线后就分配一个Action Set，用于保存处理数据的动作，其集合中同一类型的动作只有一个。此外还可以是Action List，同一类型的动作数目不受限制。</p>
+<p>包含的指令主要有：Output <em>port num</em> 转发到某个端口，Group <em>group id</em> 发送到指定的group表项处理，Drop 丢掉….</p>
+<h4 id="专用指令"><a href="#专用指令" class="headerlink" title="专用指令"></a>专用指令</h4><p>第三种是基于flow的专用指令。这种专用指令通过一条指令实现特定网络的处理功能。<br>典型有Table Miss指令。Table Miss定义了在流表中匹配不成功时，网络数据包的处理行为。</p>
+<p>总之，OpenFlow Switch只是定义了一种通用的可编程转发模型，对于数据包解析协议和包调度模块还不具备编程能力，所以依然有很大的发展空间。</p>
+<h2 id="通用的可编程数据平面"><a href="#通用的可编程数据平面" class="headerlink" title="通用的可编程数据平面"></a>通用的可编程数据平面</h2><p>当下的OpenFlow Switch模型还不具备协议无关网络数据处理，还不能成为完全的通用可编程数据转发模型。P4编程语言框架、POX协议无关转发等，都在不断探索完善中。</p>
+<h2 id="白盒交换机"><a href="#白盒交换机" class="headerlink" title="白盒交换机"></a>白盒交换机</h2><p>白盒交换机（White Box Switch），又称开放网络交换机，只有硬件而软件需要自定义安装，是网络交换机硬件和操作系统解耦合的结果。在网络领域，通常是交换机硬件和操作系统紧紧绑定在一起销售，在SDN架构的推动下，White Box Switch模式使得用户可以自主选择交换机硬件和操作系统。在近几年的SDN发展中，白盒交换机成为了新的发展趋势。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/SDN/" rel="tag"><i class="fa fa-tag"></i> SDN</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/" rel="prev" title="SDN架构与实现2--SDN南向协议">
+      <i class="fa fa-chevron-left"></i> SDN架构与实现2--SDN南向协议
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B04-SDN%E6%8E%A7%E5%88%B6%E5%B9%B3%E9%9D%A2%E4%B8%8E%E6%8E%A7%E5%88%B6%E5%99%A8/" rel="next" title="SDN架构与实现4--SDN控制平面与控制器">
+      SDN架构与实现4--SDN控制平面与控制器 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#通用可编程转发模型"><span class="nav-number">1.</span> <span class="nav-text">通用可编程转发模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#通用硬件模型"><span class="nav-number">1.1.</span> <span class="nav-text">通用硬件模型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#流水线处理"><span class="nav-number">1.1.1.</span> <span class="nav-text">流水线处理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#流表"><span class="nav-number">1.1.2.</span> <span class="nav-text">流表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#组表"><span class="nav-number">1.1.3.</span> <span class="nav-text">组表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Meter表"><span class="nav-number">1.1.4.</span> <span class="nav-text">Meter表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#状态信息表"><span class="nav-number">1.1.5.</span> <span class="nav-text">状态信息表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#端口"><span class="nav-number">1.1.6.</span> <span class="nav-text">端口</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通用处理指令"><span class="nav-number">1.2.</span> <span class="nav-text">通用处理指令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#网络处理控制指令"><span class="nav-number">1.2.1.</span> <span class="nav-text">网络处理控制指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#操作指令"><span class="nav-number">1.2.2.</span> <span class="nav-text">操作指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#专用指令"><span class="nav-number">1.2.3.</span> <span class="nav-text">专用指令</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#通用的可编程数据平面"><span class="nav-number">2.</span> <span class="nav-text">通用的可编程数据平面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#白盒交换机"><span class="nav-number">3.</span> <span class="nav-text">白盒交换机</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杨博"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">杨博</p>
+  <div class="site-description" itemprop="description">一个快废掉的咸鱼罢了</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yanghaku" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yanghaku" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:1961882079@qq.com" title="E-Mail → mailto:1961882079@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨博</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='125' src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-nest@1/canvas-nest.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/medium-zoom@1/dist/medium-zoom.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+<script type="text/x-mathjax-config">
+    MathJax.Ajax.config.path['mhchem'] = '//cdn.jsdelivr.net/npm/mathjax-mhchem@3';
+
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        extensions: ['[mhchem]/mhchem.js'],
+      equationNumbers: {
+        autoNumber: 'AMS'
+      }
+    }
+  });
+
+  MathJax.Hub.Register.StartupHook('TeX Jax Ready', function() {
+    MathJax.InputJax.TeX.prefilterHooks.Add(function(data) {
+      if (data.display) {
+        var next = data.script.nextSibling;
+        while (next && next.nodeName.toLowerCase() === '#text') {
+          next = next.nextSibling;
+        }
+        if (next && next.nodeName.toLowerCase() === 'br') {
+          next.parentNode.removeChild(next);
+        }
+      }
+    });
+  });
+
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i = 0; i < all.length; i += 1) {
+      element = document.getElementById(all[i].inputID + '-Frame').parentNode;
+      if (element.nodeName.toLowerCase() == 'li') {
+        element = element.parentNode;
+      }
+      element.classList.add('has-jax');
+    }
+  });
+</script>
+<script>
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML', () => {
+    MathJax.Hub.Typeset();
+  }, window.MathJax);
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '55d1dd52dc07814ba5c8',
+      clientSecret: 'b538350d97925eb5f6561c743de17a14e7c53e2e',
+      repo: 'yanghaku.github.io',
+      owner: 'yanghaku',
+      admin: ['yanghaku'],
+      id: '207b424da716910f7f9a74db37c17905',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

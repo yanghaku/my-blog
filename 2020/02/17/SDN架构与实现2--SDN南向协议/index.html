@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/font-awesome@4/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/pace-js@1/themes/blue/pace-theme-minimal.css">
+  <script src="//cdn.jsdelivr.net/npm/pace-js@1/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://yanghaku.github.io').hostname,
+    root: '/',
+    scheme: 'Gemini',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":true,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: true,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="SDN南向协议SDN架构中，网络的控制平面和数据平面相分离，通过南向协议进行通信。南向协议提供的可编程能力是SDN可编程能力的决定因素，所以南向协议是SDN最核心、最重要的接口标准之一。南向协议尝试为网络数据平面提供统一的、开放的和具有更多编程能力的接口，使得控制器可以基于这些接口对数据平面设备进行编程控制，指导网络流量的转发等行为。南向协议可以根据可编程能力分为狭义的南向协议和广义的南向协议。狭">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SDN架构与实现2--SDN南向协议">
+<meta property="og:url" content="https://yanghaku.github.io/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/index.html">
+<meta property="og:site_name" content="YangBo">
+<meta property="og:description" content="SDN南向协议SDN架构中，网络的控制平面和数据平面相分离，通过南向协议进行通信。南向协议提供的可编程能力是SDN可编程能力的决定因素，所以南向协议是SDN最核心、最重要的接口标准之一。南向协议尝试为网络数据平面提供统一的、开放的和具有更多编程能力的接口，使得控制器可以基于这些接口对数据平面设备进行编程控制，指导网络流量的转发等行为。南向协议可以根据可编程能力分为狭义的南向协议和广义的南向协议。狭">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-17T09:25:00.000Z">
+<meta property="article:modified_time" content="2020-02-19T03:11:53.601Z">
+<meta property="article:author" content="杨博">
+<meta property="article:tag" content="SDN">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://yanghaku.github.io/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>SDN架构与实现2--SDN南向协议 | YangBo</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="YangBo" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">YangBo</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">奋斗才能拥有最美丽的人生</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">7</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">17</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yanghaku" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanghaku.github.io/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/head.jpg">
+      <meta itemprop="name" content="杨博">
+      <meta itemprop="description" content="一个快废掉的咸鱼罢了">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangBo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SDN架构与实现2--SDN南向协议
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-17 17:25:00" itemprop="dateCreated datePublished" datetime="2020-02-17T17:25:00+08:00">2020-02-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-02-19 11:11:53" itemprop="dateModified" datetime="2020-02-19T11:11:53+08:00">2020-02-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SDN/" itemprop="url" rel="index">
+                    <span itemprop="name">SDN</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="SDN南向协议"><a href="#SDN南向协议" class="headerlink" title="SDN南向协议"></a>SDN南向协议</h2><p>SDN架构中，网络的控制平面和数据平面相分离，通过南向协议进行通信。南向协议提供的可编程能力是SDN可编程能力的决定因素，所以南向协议是SDN最核心、最重要的接口标准之一。<br>南向协议尝试为网络数据平面提供统一的、开放的和具有更多编程能力的接口，使得控制器可以基于这些接口对数据平面设备进行编程控制，指导网络流量的转发等行为。<br>南向协议可以根据可编程能力分为狭义的南向协议和广义的南向协议。<br>狭义的南向协议是具有确切的对数据平面的编程能力，指导数据平面设备的转发操作等行为。典型的是Openflow协议。POF协议和P4协议也属于狭义的南向协议的范围，但是这两个比SDN南向协议更具有通用的抽象能力，能力范围已经超越了狭义南向协议的定义，所以并不能简单归类到这里（分类是完全可编程的南向协议）。<br>广义的南向协议主要是三种类型：</p>
+<ol>
+<li>仅具有对数据平面配置能力的南向协议，如：OF-Config，OVSDB，NET-CONF</li>
+<li>具有部分可编程能力的协议，如：OpFlex</li>
+<li>本来就存在，不限于应用在SDN控制平面和数据平面通信的协议，如：PCEP，XMPP</li>
+</ol>
+<a id="more"></a>
+<h2 id="狭义SDN南向协议"><a href="#狭义SDN南向协议" class="headerlink" title="狭义SDN南向协议"></a>狭义SDN南向协议</h2><p>狭义南向协议的代表是Openflow，2008年<em>Nick McKeown</em>教授在论文中第一次介绍了这个协议，论文介绍了Openflow的原理，包括Openflow交换机和Openflow控制器的设计。Openflow是第一个SDN控制平面和数据平面交互的通信接口，也是目前最流行的SDN南向协议。</p>
+<p>在Openflow 1.0版本中定义了Openflow交换机，流表和Openflow通道，到了1.3版本又增加了组表和Meter表这两种新表。</p>
+<h3 id="Openflow表"><a href="#Openflow表" class="headerlink" title="Openflow表"></a>Openflow表</h3><h4 id="流表"><a href="#流表" class="headerlink" title="流表"></a>流表</h4><p>流表（Flow Table）是交换机用于存储流表项的表。在Openflow1.0版本中仅有一张流表（单流表）。由于单流表可以支持的程序逻辑太简单，无法满足复杂的业务逻辑，所有在Openflow1.1版本中又增加了多级流表的概念。多级流表使数据包的处理逻辑划分成多个子逻辑，分成多个表来处理，使数据包的处理变成了一条流水线。<br>流表中由匹配域、指令集和计数器三个主要部分及其他部分组成（优先级、计时器等）。<br><strong>网络数据表进入交换机之后会匹配流表中的流表项，匹配到同一条流表的数据包称为数据流Data Flow，简称Flow。</strong><br>匹配域用于区分不同的数据流，匹配成功之后执行对应的指令，完成对数据的处理。</p>
+<p>匹配域原先叫做包头域，（1.0协议里）包括12个元组：入端口（Ingress Port），源MAC地址（Ether Source），目的MAC地址（Ether Des），以太网类型（Ether Type），VLAN ID（VLAN ID），VLAN优先级（VLAN Priority），源IP地址（IP Src），目的IP地址（IP Dst），IP协议（IP Proto），IP TOS位（IP Tos bits），TCP/UDP源端口（TCP/UDP Src Port）,TCP/UDP目的端口（TCP/UDP Dst Port）</p>
+<h4 id="组表"><a href="#组表" class="headerlink" title="组表"></a>组表</h4><p>组表（Group Table）是定义一组动作，且这组动作可被多条流表项共同使用，从而实现组播、负载均衡、聚合等功能。结构有：组表号，类型，计数器和动作桶。 组表的存在降低了流表的逻辑复杂度，也减少了流表的存储空间。</p>
+<h4 id="Meter表"><a href="#Meter表" class="headerlink" title="Meter表"></a>Meter表</h4><p>Meter表（Meter Table）用于计量和限速，其结构有：计量表号，计量带和计数器。Meter表项针对流制定对应的限速等规则，从而实现丰富的Qos功能。Meter表是面向流的，更细致灵活。</p>
+<h3 id="Openflow通道"><a href="#Openflow通道" class="headerlink" title="Openflow通道"></a>Openflow通道</h3><p>Openflow通道是控制器和交换机通信的通道，通道中转发的数据为Openflow消息（Openflow报文）。 Openflow报文分为 <strong>Controller-to-Switch、Asynchronous、Symmetric</strong>三大类。Controller-to-Switch类型的报文主要是由控制器初始化并发送给交换机，Asynchronous类型报文主要是交换机异步上报给控制器的报文，Symmetric类报文是无需等待对方请求、双方都可以任意发送的报文。</p>
+<h4 id="Controller-to-Switch报文"><a href="#Controller-to-Switch报文" class="headerlink" title="Controller-to-Switch报文"></a>Controller-to-Switch报文</h4><p>Controller-to-Switch 报文是控制器初始化并下发给交换机的报文类型。其可能会要求交换机回复对应的报文。主要类型：</p>
+<ul>
+<li>Features：Features类型的报文主要分Request和Reply两种，其中控制器可以主动初始化并发送Feature_Request 报文，请求交换机回复其特性信息，交换机收到后将通过Feature_Reply报文回复交换机的特性和交换机端口特性信息。通常控制器会在交换机的Openflow连接建立完成之后马上发送一个请求报文来获取交换机的特征信息。</li>
+<li>Configuration： 其包含请求、回复和设置三种报文。控制器可以设置和请求交换机的配置信息，交换机则需执行配置和回复配置报文。</li>
+<li>Modify-State：读取状态信息，由控制器发出，用于获取交换机的状态信息，包括流表、组表、Meter表及端口的统计信息。</li>
+<li>Packet-out：由控制器发出，用于将数据包发送到交换机的指定端口。一般用于相应Packet-in报文的处理，经常跟在Flow-mod报文之后，用于指挥交换机将缓存数据发送或直接发送数据。Packet-out还需要携带指导数据处理的动作集，如果动作集为空则交换机会将数据包丢弃。</li>
+<li>Barrier：Barrier Request/Reply 用于确保操作顺序执行。控制器可以向交换机发送Request报文，交换机收到后将request报文之前的报文处理完成之后，再处理Barrier Request请求。回复控制器一个Barrier Reply报文，其报文ID和请求报文一致，告知控制器在Barrier Request报文之前到来的报文已经处理完成。类似于设置一个障碍或触发器，确保动作执行顺序，保持策略的一致性。</li>
+<li>Role-Request： 用于控制器请求其自身在交换机端的角色，也用于设置控制器的角色。一般用于交换机在与多控制器有连接的场景。</li>
+<li>Asynchronous-Configuration：异步配置报文可以用来配置异步报文的过滤器，从而使得在多控制器场景下，控制器可以选择性过滤异步报文，只接收感兴趣的报文。</li>
+</ul>
+<h4 id="Asynchronous报文"><a href="#Asynchronous报文" class="headerlink" title="Asynchronous报文"></a>Asynchronous报文</h4><p>Asynchronous报文是由交换机异步发送给控制器的报文，无须等待控制器请求。交换机通过异步报文告知控制器新数据包的到达和交换机状态的改变。主要类型：</p>
+<ul>
+<li>Packet-in：将数据包发给控制器。在支持单流表的Openflow协议中，触发Packet-in 的原因可能是流表项的动作指导，也可能是因为匹配不到流表项。但在高版本的多级流表设计下，将默认下发一条Table-Miss流表项。其匹配域均为空，任何报文都能匹配成功。Table-Miss作用是将匹配其他流表失败的数据发给控制器。若交换机配置信息中指示将数据包缓存在交换机上，则Packet-in报文还将携带着指定长度的数据包数据及其在交换机上缓存的Buffer_id，携带的数据包默认长度是128字节。若交换机不缓存数据包，则Packet-in会携带全部数据并发送给控制器。Packet-in通常会触发Packet-out报文或者Flow-mod报文。</li>
+<li>Flow-Removed：当OFPFF_SEND_FLOW_REM标志位被置位的时候，交换机将会在流表项失效时通知控制器流表项被移除的消息。触发流表项失效的原因可以是控制器主动删除或者流表项超时。</li>
+<li>Port-status：当端口配置或者状态变化时，用于告知控制器端口状态发生改变。</li>
+<li>Pole-status：当控制器角色发生变换时，交换机告知控制器其角色变换。</li>
+<li>Controller-Status：当Openflow连接发生变化时，通知控制器。</li>
+<li>Flow-monitor：告知控制器流表的改变。控制器可以设置一系列监视器来追踪流表的变化。</li>
+</ul>
+<h4 id="Symmetric报文"><a href="#Symmetric报文" class="headerlink" title="Symmetric报文"></a>Symmetric报文</h4><p>控制器和交换机双方都可以发送，无须得到对方的许可或请求。主要类型：</p>
+<ul>
+<li>Hello：Openflow通道建立初期，用于协商版本等内容。</li>
+<li>Echo：Echo Request/Reply 任意一方发出，每个Request都需要Reply回复，主要是保持连接的活性，也可以支持携带消息内容，用于时延或带宽测试。</li>
+<li>Error：错误报文用于告知对方错误。一般多用于交换机告知控制器请求发生的错误。</li>
+<li>Experimenter： 实验报文是报文功能范围之外的标准方式，可以用于实验场景。</li>
+</ul>
+<h3 id="Openflow通信流程"><a href="#Openflow通信流程" class="headerlink" title="Openflow通信流程"></a>Openflow通信流程</h3><p>交换机和控制器建立完socket通信之后，会相互发送Hello报文，协商版本协议。当版本协议协商之后，控制器会向交换机下发Feature Requet报文，交换机需回复Feature Reply报文。控制器根据交换机支持的特性，可以完成交换机的相关配置。配置完成之后，进入正常的通信状态。如果Openflow版本支持多流表，控制器还会下发Table-Miss流表项到交换机。<br>当交换机匹配流表失败或者匹配到Table-Miss时，交换机会将其Packet-in到控制器，控制器根据当前逻辑选择回复Packet-out或者下发Flow-mod指导交换机处理数据流。如果配置了Flow-Removed标志位，则当流表过期时，交换机会向控制器回复Flow-Removed报文。<br>其他异步报文发生在任意时刻。为了保持连接活性，会周期性地发出Echo报文。</p>
+<h2 id="广义的SDN南向协议"><a href="#广义的SDN南向协议" class="headerlink" title="广义的SDN南向协议"></a>广义的SDN南向协议</h2><h3 id="OF-Config"><a href="#OF-Config" class="headerlink" title="OF-Config"></a>OF-Config</h3><p>在Openflow协议的规范中，控制器需要和配置完成的交换机进行通信。交换机正常工作前需要对其功能、特性及资源进行配置才能正常工作。这些配置超出了Openflow协议的范围。OF-Config（Openflow Management and Configuration Protocol）协议就是一种Openflow 交换机配置协议。<br>作为Openflow的伴侣协议，OF-config很好填补了Openflow协议之外的内容。在Openflow协议的SDN框架中，需要如OF-Config这样的配置协议来完成交换机的配置工作，包括配置控制器信息等内容。当交换机和控制器建立连接之后，将通过Openflow协议来传递信息。OF-Config是对Openflow协议的补充，但是设计动机、设计目的和实现方式都不一样。有些Openflow逻辑交换机的属性均可以通过Openflow协议和OF-Config协议来配置，所以两个协议有一些重叠的功能。</p>
+<h3 id="OVSDB"><a href="#OVSDB" class="headerlink" title="OVSDB"></a>OVSDB</h3><p>OVSDB（The Open vSwitch Database Management Protocol, OVS的数据库管理协议）是专门用于Openvswitch的管理和配置的协议。OVSDB和OF-Config类似，都是Openflow交换机配置协议，但两者也有区别：OVSDB仅用于OVS的配置和管理，而OF-Config可以用于所有支持OpenFlow的软件和硬件的交换机。<br>随着虚拟机及Docker等虚拟化技术在数据中心及实验环境中越来越普及，OVS作为虚拟机和Docker与物理网络通信的关键节点越来越重要，所以专门用来配置OVS的协议OVSDB在未来也越来越重要。</p>
+<h3 id="NETCONF"><a href="#NETCONF" class="headerlink" title="NETCONF"></a>NETCONF</h3><p>为了弥补SNMP的不足，IETF提出的一个基于XML的NETCONF协议，具有很强的数据描述能力和良好的扩展性。因为在网络配置方面高效，所以成为了许多网络设备的配置协议，被多种SDN控制器支持。但是它无法指导交换机进行数据转发处理，它的定位还是和OVSDB，OF-Config类似。对于传统设备而言，NETCONF可以配置之后即可工作，对于SDN设备而言，还需要Openflow等协议来指导交换机的数据交换功能。</p>
+<h4 id="OpFlex"><a href="#OpFlex" class="headerlink" title="OpFlex"></a>OpFlex</h4><p>OpFlex是思科提出来的一个可扩展的SDN南向协议，用于控制器和数据平面设备直接交换网络策略。OpFlex是一种声明式控制协议，而Openflow则是一种命令式控制。声明式控制是只通知对象要达到一种要求状态，但是没有规定其通过指定的方式去达到这个状态。本质上是一种SDN南向协议，但是其具有的可编程能力不强，且采用OpFlex架构的终端依然是底层的智能设备，所以OpFlex只能归类于广义的SDN南向协议范畴。</p>
+<h4 id="XMPP"><a href="#XMPP" class="headerlink" title="XMPP"></a>XMPP</h4><p>XMPP（Extensible Messaging and Presence Protocol）是一种以XML为基础的开放式即时通讯协议。由于其自身具有良好的扩展性，从而可以被灵活应用到即使通讯、网络设备管理等多种场合。XMPP不是专门为SDN设计的，因为其良好的扩展性，逐渐成为SDN南向协议的一种。优点是可以统一管理传统设备和SDN设备。用户的网络可能存在大量的传统设备，采用兼容性良好的XMPP可以统一管理，从而保护用户的已有资产，这是XMPP作为南向协议最大优势之一。不过功能粒度相比于Openflow还很粗。</p>
+<h4 id="PCEP"><a href="#PCEP" class="headerlink" title="PCEP"></a>PCEP</h4><p>PECP（Path Computation Element Communication Protocol）是由IETF提出的路径计算单元通信协议，常为流量工程提供路径计算服务。PECP的设计具有很好的弹性和可扩展性，易于拓展。PCEP把路径计算的控制逻辑从转发设备抽离到远端，实现了部分的数据平面和控制平面的分离。通过远端服务器的软件编程，可以指导底层路由或转发设备实现数据的转发和路由，所以也属于一种广义的SDN南向协议。但PECP可编程能力还不完善，也不是专门为SDN设计的。</p>
+<h3 id="完全可编程的南向协议"><a href="#完全可编程的南向协议" class="headerlink" title="完全可编程的南向协议"></a>完全可编程的南向协议</h3><h4 id="POF"><a href="#POF" class="headerlink" title="POF"></a>POF</h4><p>POF（Protocol Oblivious Forwarding）是由华为宋浩宇等人提出来的SDN南向协议，是一种实现方式。与OpenFlow相似，在POF定义的架构中分为控制平面的POF控制器和数据平面的POF转发元件。POF是协议无关的协议，在POF架构中，POF交换机没有协议的概念，仅仅是在POF控制器的指导下通过{offset,length}来定位数据、匹配并执行对应的操作。此举使交换机在不关心网络协议的情况下完成网络数据的处理，使得在支持新协议的时候无须岁交换机进行升级，只需要升级控制平面即可。</p>
+<p>在原先的OpenFlow协议里，1.0版本12个匹配域，1.3版本40个匹配域。随着技术的发展，还会有更多的协议需要支持，那匹配域也需要增加。不断增加的匹配域使得OpenFlow协议越来越复杂，而且设备厂家需要开发出新的交换机来支持新的协议。原先OpenFlow数据平面和控制平面分离不够彻底，数据平面交换机依然需要掌握协议的语义等控制信息才能完成数据匹配。</p>
+<p>POF通过通用指令集来实现协议无关转发的设计，使交换机具有完全的可编程能力。控制器通过南向协议对交换机进行编程，包括协议解析和对应数据流处理规则的编程。当网路中需要支持新协议时，只需要通过控制器进行编程就可实现，大大缩短了网络创新的周期。而对于运营商或者服务提供商而言，在添加新的网络服务的时候不用再联系厂商，也不用购买新的交换设备了。</p>
+<h4 id="P4"><a href="#P4" class="headerlink" title="P4"></a>P4</h4><p>P4是由Pat Bosshart等人提出的“协议无关数据包处理编程语言”。定义了一系列语法，也开发出了P4的编译器，支持对P4转发模型的协议解析过程和转发过程进行编程定义，实现了真正意义上的协议无关可编程网络数据平面。和POF相似，只不过侧重点不同。POF通过{offset,length}来确定待匹配数据，强调协议无关，而P4不仅有底层高度抽象的协议无关指令集，更侧重于网络数据平面编程语言的建模。P4和POF的出现，给网络带来更强大的可编程能力，是必然趋势，是不可阻挡的。</p>
+<hr/>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/SDN/" rel="tag"><i class="fa fa-tag"></i> SDN</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B01--SDN%E4%BB%8B%E7%BB%8D/" rel="prev" title="SDN架构与实现1--SDN介绍">
+      <i class="fa fa-chevron-left"></i> SDN架构与实现1--SDN介绍
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/" rel="next" title="SDN架构与实现3--SDN数据平面与交换机">
+      SDN架构与实现3--SDN数据平面与交换机 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#SDN南向协议"><span class="nav-number">1.</span> <span class="nav-text">SDN南向协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#狭义SDN南向协议"><span class="nav-number">2.</span> <span class="nav-text">狭义SDN南向协议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Openflow表"><span class="nav-number">2.1.</span> <span class="nav-text">Openflow表</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#流表"><span class="nav-number">2.1.1.</span> <span class="nav-text">流表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#组表"><span class="nav-number">2.1.2.</span> <span class="nav-text">组表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Meter表"><span class="nav-number">2.1.3.</span> <span class="nav-text">Meter表</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Openflow通道"><span class="nav-number">2.2.</span> <span class="nav-text">Openflow通道</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Controller-to-Switch报文"><span class="nav-number">2.2.1.</span> <span class="nav-text">Controller-to-Switch报文</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Asynchronous报文"><span class="nav-number">2.2.2.</span> <span class="nav-text">Asynchronous报文</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Symmetric报文"><span class="nav-number">2.2.3.</span> <span class="nav-text">Symmetric报文</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Openflow通信流程"><span class="nav-number">2.3.</span> <span class="nav-text">Openflow通信流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#广义的SDN南向协议"><span class="nav-number">3.</span> <span class="nav-text">广义的SDN南向协议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#OF-Config"><span class="nav-number">3.1.</span> <span class="nav-text">OF-Config</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OVSDB"><span class="nav-number">3.2.</span> <span class="nav-text">OVSDB</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#NETCONF"><span class="nav-number">3.3.</span> <span class="nav-text">NETCONF</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#OpFlex"><span class="nav-number">3.3.1.</span> <span class="nav-text">OpFlex</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#XMPP"><span class="nav-number">3.3.2.</span> <span class="nav-text">XMPP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PCEP"><span class="nav-number">3.3.3.</span> <span class="nav-text">PCEP</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#完全可编程的南向协议"><span class="nav-number">3.4.</span> <span class="nav-text">完全可编程的南向协议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#POF"><span class="nav-number">3.4.1.</span> <span class="nav-text">POF</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#P4"><span class="nav-number">3.4.2.</span> <span class="nav-text">P4</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="杨博"
+      src="/images/head.jpg">
+  <p class="site-author-name" itemprop="name">杨博</p>
+  <div class="site-description" itemprop="description">一个快废掉的咸鱼罢了</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yanghaku" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yanghaku" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:1961882079@qq.com" title="E-Mail → mailto:1961882079@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">杨博</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  
+  <script color='0,0,255' opacity='0.5' zIndex='-1' count='125' src="//cdn.jsdelivr.net/gh/theme-next/theme-next-canvas-nest@1/canvas-nest.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/medium-zoom@1/dist/medium-zoom.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+  <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+<script type="text/x-mathjax-config">
+    MathJax.Ajax.config.path['mhchem'] = '//cdn.jsdelivr.net/npm/mathjax-mhchem@3';
+
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        extensions: ['[mhchem]/mhchem.js'],
+      equationNumbers: {
+        autoNumber: 'AMS'
+      }
+    }
+  });
+
+  MathJax.Hub.Register.StartupHook('TeX Jax Ready', function() {
+    MathJax.InputJax.TeX.prefilterHooks.Add(function(data) {
+      if (data.display) {
+        var next = data.script.nextSibling;
+        while (next && next.nodeName.toLowerCase() === '#text') {
+          next = next.nextSibling;
+        }
+        if (next && next.nodeName.toLowerCase() === 'br') {
+          next.parentNode.removeChild(next);
+        }
+      }
+    });
+  });
+
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i = 0; i < all.length; i += 1) {
+      element = document.getElementById(all[i].inputID + '-Frame').parentNode;
+      if (element.nodeName.toLowerCase() == 'li') {
+        element = element.parentNode;
+      }
+      element.classList.add('has-jax');
+    }
+  });
+</script>
+<script>
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML', () => {
+    MathJax.Hub.Typeset();
+  }, window.MathJax);
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '55d1dd52dc07814ba5c8',
+      clientSecret: 'b538350d97925eb5f6561c743de17a14e7c53e2e',
+      repo: 'yanghaku.github.io',
+      owner: 'yanghaku',
+      admin: ['yanghaku'],
+      id: 'b543b78428e49288a73149ab5b39d959',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

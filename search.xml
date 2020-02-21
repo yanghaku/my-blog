@@ -1,6 +1,557 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>SDN中简单模拟DDOS检测与防御</title>
+    <url>/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/</url>
+    <content><![CDATA[<p>使用自定义python脚本，自动利用mininet构建虚拟网络并且设置sflow-rt流量监控，ryu为控制器。</p>
+<h2 id="架构："><a href="#架构：" class="headerlink" title="架构："></a>架构：</h2><a id="more"></a>
+<p><img src="a.png" alt="a.png"></p>
+<p>从上图中可以看到，mininet基于OVS构建出网络之后，由ryu通过南向协议控制，交换机设置sFlow agent之后，采集的flow信息传给sflow-rt收集，然后用户通过REST API实现与ryu和sflow-rt进行通信，从sflow-rt获取流量信息或者向ryu请求添加/删除某些流表。</p>
+<hr/>
+
+<h3 id="REST-API-介绍"><a href="#REST-API-介绍" class="headerlink" title="REST API 介绍"></a>REST API 介绍</h3><p>REST是Representational State Transfer（表现层状态转移）的缩写，它是由罗伊·菲尔丁（Roy Fielding）提出的，是用来描述创建HTTP API的标准方法的，他发现这四种常用的行为（查看（view），创建（create），编辑（edit）和删除（delete））都可以直接映射到HTTP 中已实现的GET,POST,PUT和DELETE方法。<br>REST API也就是通过HTTP协议实现规定了这四大行为，实现“表现层的状态转化”。每一个URL对应着一个资源，客户与服务端之间传递某种资源的表现层。返回的数据的形式可以是html，json，xml等。</p>
+<p>ryu的app实现了某些REST API，默认的端口是8080，sFlow-rt实现的的默认端口是8008<br>比如说ryu的ofctl_rest.py 里面实现的REST API，在源码里都有对应介绍（详见最下面的附录）。<br>sflow-rt的API（需要启动sflow-rt后查看） <a href="http://(sflow_rt_IP):8008/api/index.html">http://(sflow_rt_IP):8008/api/index.html</a></p>
+<p>访问这些api就通过http请求即可<br>比如用python的request库或者命令行curl</p>
+<p>例：curl查看sflow agent</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yb@sdn-server:~$ curl http:/127.0.0.1:8008/agents/json</span><br><span class="line">&#123;<span class="string">"127.0.0.1"</span>: &#123;</span><br><span class="line"> <span class="string">"sFlowDatagramsLost"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowDatagramSource"</span>: [<span class="string">"127.0.0.1"</span>],</span><br><span class="line"> <span class="string">"firstSeen"</span>: 1137756,</span><br><span class="line"> <span class="string">"sFlowFlowDuplicateSamples"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowDatagramsReceived"</span>: 451732,</span><br><span class="line"> <span class="string">"sFlowCounterDatasources"</span>: 9,</span><br><span class="line"> <span class="string">"sFlowFlowOutOfOrderSamples"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowFlowSamples"</span>: 4506494,</span><br><span class="line"> <span class="string">"sFlowDatagramsOutOfOrder"</span>: 2,</span><br><span class="line"> <span class="string">"uptime"</span>: 973000,</span><br><span class="line"> <span class="string">"sFlowCounterDuplicateSamples"</span>: 0,</span><br><span class="line"> <span class="string">"lastSeen"</span>: 156756,</span><br><span class="line"> <span class="string">"sFlowDatagramsDuplicates"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowFlowDrops"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowFlowLostSamples"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowCounterSamples"</span>: 867,</span><br><span class="line"> <span class="string">"sFlowCounterLostSamples"</span>: 0,</span><br><span class="line"> <span class="string">"sFlowFlowDatasources"</span>: 7,</span><br><span class="line"> <span class="string">"sFlowCounterOutOfOrderSamples"</span>: 0</span><br><span class="line">&#125;&#125;</span><br><span class="line">yb@sdn-server:~$</span><br></pre></td></tr></table></figure>
+<h3 id="工具的默认端口："><a href="#工具的默认端口：" class="headerlink" title="工具的默认端口："></a>工具的默认端口：</h3><ul>
+<li>控制器：6653，6633</li>
+<li>控制器REST API：8080</li>
+<li>sflow agent：6343</li>
+<li>sflow-rt REST API：8008</li>
+</ul>
+<p>下面就是具体操作了：</p>
+<hr/>
+
+
+<h2 id="启动sflow-rt"><a href="#启动sflow-rt" class="headerlink" title="启动sflow-rt"></a>启动sflow-rt</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yb@sdn-server:~$ ./sflow-rt/start.sh</span><br><span class="line">2020-02-21T03:14:32Z INFO: Starting sFlow-RT 3.0-1448</span><br><span class="line">2020-02-21T03:14:36Z INFO: Version check, 3.0-1469 available</span><br><span class="line">2020-02-21T03:14:36Z INFO: Listening, sFlow port 6343</span><br><span class="line">2020-02-21T03:14:36Z INFO: Listening, HTTP port 8008</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/mininet-dashboard/scripts/metrics.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/dashboard-example/scripts/metrics.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/flow-graph/scripts/graph.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/world-map/scripts/countries.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/flow-trend/scripts/top.js started</span><br><span class="line">2020-02-21T03:14:37Z INFO: app/ix-metrics/scripts/metrics.js started</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>此时sflow监听开启</p>
+<h2 id="启动ryu"><a href="#启动ryu" class="headerlink" title="启动ryu"></a>启动ryu</h2><p>在这里需要用到ryu的两个app:<br>simple_switch_13.py 实现交换机(OpenFlow1.3协议)的转发功能<br>ofctl_rest.py 用于通过REST API进行添加/删除流表，实现阻止DDOS的流量<br>两个都在ryu安装目录的app里面</p>
+<p>启动：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yb@sdn-server:~$ ryu-manager ryu/app/simple_switch_13.py ryu/app/ofctl_rest.p y</span><br><span class="line">loading app ryu/app/simple_switch_13.py</span><br><span class="line">loading app ryu/app/ofctl_rest.py</span><br><span class="line">loading app ryu.controller.ofp_handler</span><br><span class="line">instantiating app None of DPSet</span><br><span class="line">creating context dpset</span><br><span class="line">creating context wsgi</span><br><span class="line">instantiating app ryu/app/simple_switch_13.py of SimpleSwitch13</span><br><span class="line">instantiating app ryu.controller.ofp_handler of OFPHandler</span><br><span class="line">instantiating app ryu/app/ofctl_rest.py of RestStatsApi</span><br><span class="line">(10379) wsgi starting up on http://0.0.0.0:8080</span><br><span class="line">...</span><br></pre></td></tr></table></figure></p>
+<h2 id="启动mininet构建虚拟网络"><a href="#启动mininet构建虚拟网络" class="headerlink" title="启动mininet构建虚拟网络"></a>启动mininet构建虚拟网络</h2><p>这个是最关键的，使用python脚本，实现自定义的拓扑，并且将每个交换机都设置好控制器和sflow代理。</p>
+<blockquote>
+<p>如果不需要自定义的话，简单一个命令就可以搞定， —custom来设定的sflow-rt/extras里面的sflow.py就是可以自动将mininet里的交换机设置代理。<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo mn --controller=remote,ip=127.0.0.1,port=6633 --custom</span><br><span class="line">sflow-rt/extras/sflow.py --switch ovs,protocols=OpenFlow13</span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<p>但是，为了可以实现复杂的网络拓扑，还有其他特性的设置，编写自定义的脚本还是非常非常重要的。</p>
+<p>下面就是实现的一个自定义脚本：</p>
+<p>首先是实现一个自定义的拓扑类（继承mininet.topo.Topo）,构造函数的参数是交换机的个数和主机个数，建边的函数就决定了拓扑的复杂性（这里只是简单测试，所以写的建边函数只是线性连接的）。</p>
+<p>customTopology.py(具体看注释):<br><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># coding:utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> mininet.topo <span class="keyword">import</span> Topo</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 自定义拓扑类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CustomTopology</span><span class="params">(Topo)</span>:</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 构造函数,s_num为交换机个数,h_num为主机个数</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, switch_num, host_num)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> <span class="string">'*** Class CustomTopology init'</span></span><br><span class="line"></span><br><span class="line">        self.switch_list = []  <span class="comment"># 交换机列表初始化</span></span><br><span class="line">        self.host_list = []  <span class="comment"># 主机列表初始化</span></span><br><span class="line">        Topo.__init__(self)  <span class="comment"># 父类构造函数</span></span><br><span class="line">        self.create_nodes(switch_num, host_num)  <span class="comment"># 创建节点</span></span><br><span class="line">        self.create_links()  <span class="comment"># 创建链路</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">print</span> <span class="string">'*** Class CustomTopology init Success'</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 创建节点的函数</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">create_nodes</span><span class="params">(self, switch_num, host_num)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> <span class="string">'*** Add switches and hosts to Topology'</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> xrange(<span class="number">1</span>, switch_num + <span class="number">1</span>):</span><br><span class="line">            self.switch_list.append(self.addSwitch(<span class="string">"s%d"</span> % i))</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> xrange(<span class="number">1</span>, host_num + <span class="number">1</span>):</span><br><span class="line">            self.host_list.append(self.addHost(<span class="string">'h%d'</span> % i))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 创建链路的函数, 建边函数决定了自定义拓扑的复杂度</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">create_links</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">print</span> <span class="string">'*** Add links to Topology'</span></span><br><span class="line">        self.addLink(self.switch_list[<span class="number">0</span>],self.switch_list[<span class="number">1</span>])</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> xrange(len(self.host_list)):</span><br><span class="line">            <span class="keyword">if</span> i &lt; <span class="number">2</span>:</span><br><span class="line">                self.addLink(self.switch_list[<span class="number">0</span>], self.host_list[i])</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                self.addLink(self.switch_list[<span class="number">1</span>], self.host_list[i])</span><br></pre></td></tr></table></figure></p>
+<p>然后就是创建网络的脚本了，需要import上面的<code>customTopology.py</code><br>具体顺序是：创建拓扑 -&gt; 根据拓扑创建网络 -&gt; 将交换机openflow协议设置成1.3版本 -&gt; 设置sflow代理，将所有交换机加入代理 -&gt; 将mininet的拓扑通过REST API发送给sflow-rt -&gt; 创建完成，打开mininet的CLI。</p>
+<p>具体可以看代码createNet.py:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># coding:utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Mininet自定义脚本</span></span><br><span class="line"><span class="string">通过Mininet的API实现构建自定义网络，并设置sflow代理</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> mininet.net <span class="keyword">import</span> Mininet</span><br><span class="line"><span class="keyword">from</span> mininet.node <span class="keyword">import</span> RemoteController</span><br><span class="line"><span class="keyword">from</span> mininet.cli <span class="keyword">import</span> CLI</span><br><span class="line"><span class="keyword">from</span> mininet.link <span class="keyword">import</span> TCLink</span><br><span class="line"><span class="keyword">from</span> mininet.util <span class="keyword">import</span> quietRun, customClass</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> requests  <span class="comment"># 导入request，通过REST API 与 sflow-rt 通信</span></span><br><span class="line"><span class="keyword">from</span> customTopology <span class="keyword">import</span> CustomTopology  <span class="comment"># 导入自定义的拓扑类</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置交换机的OpenFlow协议版本</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configOpenFlow</span><span class="params">(net, protocol)</span>:</span></span><br><span class="line">    <span class="keyword">print</span> <span class="string">'*** set ovs protocols ='</span> + protocol</span><br><span class="line">    cmd = <span class="string">'ovs-vsctl set bridge %s protocols='</span> + protocol</span><br><span class="line">    <span class="keyword">for</span> s <span class="keyword">in</span> net.switches:</span><br><span class="line">        quietRun(cmd % s)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置sflow agent</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">configSFlow</span><span class="params">(net, agent_ifname, collector, sampling, polling)</span>:</span></span><br><span class="line">    <span class="keyword">print</span> <span class="string">'*** config SFlow agent'</span></span><br><span class="line">    cmd = <span class="string">'ovs-vsctl -- --id=@sflow create sflow agent=%s target=%s sampling=%d polling=%d --'</span> % \</span><br><span class="line">          (agent_ifname, collector, sampling, polling)</span><br><span class="line">    <span class="keyword">for</span> s <span class="keyword">in</span> net.switches:</span><br><span class="line">        cmd += <span class="string">' -- set bridge %s sflow=@sflow'</span> % s</span><br><span class="line">    quietRun(cmd)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 向sFlow-rt 发送当前拓扑</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">sendTopology</span><span class="params">(net, agent_ip, collector)</span>:</span></span><br><span class="line">    <span class="keyword">print</span> <span class="string">"*** Sending topology"</span></span><br><span class="line">    nodes = &#123;&#125;</span><br><span class="line">    links = &#123;&#125;</span><br><span class="line">    <span class="keyword">for</span> s <span class="keyword">in</span> net.switches:</span><br><span class="line">        nodes[s.name] = &#123;<span class="string">'agent'</span>: agent_ip, <span class="string">'ports'</span>: &#123;&#125;&#125;</span><br><span class="line">    path = <span class="string">'/sys/devices/virtual/net/'</span>  <span class="comment"># 虚拟网络存储的位置</span></span><br><span class="line">    pattern = re.compile(<span class="string">'(^.+)-(.+)'</span>)  <span class="comment"># 编译正则表达式，用于匹配所有 s1-eth1 这种设备</span></span><br><span class="line">    <span class="keyword">for</span> child <span class="keyword">in</span> os.listdir(path):  <span class="comment"># 遍历这个文件夹， 获取每个交换机的端口</span></span><br><span class="line">        parts = pattern.match(child)</span><br><span class="line">        <span class="comment"># 如果存在匹配并且交换机在node列表里，就加入配置</span></span><br><span class="line">        <span class="comment"># 比如s1-eth1, parts.group(0)='s1-eth1' , parts.group(1)='s1', parts.group(2)='eth1'</span></span><br><span class="line">        <span class="keyword">if</span> parts <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span> <span class="keyword">and</span> parts.group(<span class="number">1</span>) <span class="keyword">in</span> nodes:</span><br><span class="line">            <span class="comment"># 获取端口的id</span></span><br><span class="line">            ifindex = open(path + child + <span class="string">'/ifindex'</span>).read().strip(<span class="string">'\n'</span>)</span><br><span class="line">            nodes[parts.group(<span class="number">1</span>)][<span class="string">'ports'</span>][child] = &#123;<span class="string">'ifindex'</span>: ifindex&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 统计交换机两两之间是不是有连接link</span></span><br><span class="line">    length = len(net.switches)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> xrange(length):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> xrange(i + <span class="number">1</span>, length):</span><br><span class="line">            s1 = net.switches[i]</span><br><span class="line">            s2 = net.switches[j]</span><br><span class="line">            intfs = s1.connectionsTo(s2)  <span class="comment"># 两个交换机直接的连接</span></span><br><span class="line">            <span class="keyword">for</span> intf <span class="keyword">in</span> intfs:</span><br><span class="line">                link = <span class="string">'%s-%s'</span> % (s1.name, s2.name)</span><br><span class="line">                links[link] = &#123;</span><br><span class="line">                    <span class="string">'node1'</span>: s1.name,</span><br><span class="line">                    <span class="string">'node2'</span>: s2.name,</span><br><span class="line">                    <span class="string">'port1'</span>: intf[<span class="number">0</span>].name,  <span class="comment"># 两个端口，一个属于s1，一个属于s2</span></span><br><span class="line">                    <span class="string">'port2'</span>: intf[<span class="number">1</span>].name</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 向sFlow-rt 发送拓扑信息， sFlow-rt 端口默认8008</span></span><br><span class="line">    requests.put(<span class="string">'http://%s:8008/topology/json'</span> % collector, json=&#123;<span class="string">'nodes'</span>: nodes, <span class="string">'links'</span>: links&#125;)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建网络的主函数, 参数分别是:控制器的ip, sFlow收集器(sFlow-rt)的ip, sFlow agent的网卡, Sflow agent的ip</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">createNet</span><span class="params">(controller_ip, sFlow_collector, sFlow_agent_ifname, sFlow_agent_ip)</span>:</span></span><br><span class="line">    <span class="comment"># 初始化拓扑</span></span><br><span class="line">    topology = CustomTopology(<span class="number">2</span>, <span class="number">4</span>)</span><br><span class="line">    <span class="comment"># Rate limit links to 10Mbps</span></span><br><span class="line">    link = customClass(&#123;<span class="string">'tc'</span>: TCLink&#125;, <span class="string">'tc,bw=10'</span>)</span><br><span class="line">    <span class="comment"># 根据初始化网络</span></span><br><span class="line">    net = Mininet(topo=topology, link=link, controller=<span class="literal">None</span>)</span><br><span class="line">    <span class="comment"># 增加控制器，控制器端口默认都是6633和6653</span></span><br><span class="line">    net.addController(<span class="string">'ryu-controller'</span>, controller=RemoteController, ip=controller_ip, port=<span class="number">6633</span>)</span><br><span class="line">    <span class="comment"># 启动网络</span></span><br><span class="line">    net.start()</span><br><span class="line">    <span class="comment"># 设置交换机的OpenFlow版本</span></span><br><span class="line">    configOpenFlow(net, <span class="string">'OpenFlow13'</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 设置sFlow agent</span></span><br><span class="line">    configSFlow(net, sFlow_agent_ifname, sFlow_collector, <span class="number">10</span>, <span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 向sFlow-rt 发送当前拓扑</span></span><br><span class="line">    sendTopology(net, sFlow_agent_ip, sFlow_collector)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 互相ping测试连通</span></span><br><span class="line">    net.pingAll()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 测试带宽</span></span><br><span class="line">    <span class="keyword">print</span> <span class="string">"*** Testing bandwidth between h1 and h4"</span></span><br><span class="line">    h1, h4 = net.get(<span class="string">'h1'</span>, <span class="string">'h4'</span>)</span><br><span class="line">    net.iperf((h1, h4))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 开启命令行</span></span><br><span class="line">    CLI(net)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 最后关闭网络</span></span><br><span class="line">    net.stop()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    <span class="keyword">if</span> os.getuid() != <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'You are not root!!'</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="comment"># 预先定义的变量</span></span><br><span class="line">        controller_ip = <span class="string">'127.0.0.1'</span></span><br><span class="line">        sFlow_collector = <span class="string">'127.0.0.1'</span></span><br><span class="line">        sFlow_agent_ifname = <span class="string">'lo'</span>  <span class="comment"># 因为虚拟网络和收集器是在同一个主机，所以直接用环回测试网卡做agent即可</span></span><br><span class="line">        sFlow_agent_ip = <span class="string">'127.0.0.1'</span></span><br><span class="line">        createNet(controller_ip, sFlow_collector, sFlow_agent_ifname, sFlow_agent_ip)</span><br></pre></td></tr></table></figure>
+<p>然后执行<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">chmod +x *.py</span><br><span class="line">sudo ./createNet.py</span><br></pre></td></tr></table></figure></p>
+<p>输出：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yb@sdn-server:~/code$ sudo ./createNet.py</span><br><span class="line">*** Class CustomTopology init</span><br><span class="line">*** Add switches and hosts to Topology</span><br><span class="line">*** Add links to Topology</span><br><span class="line">*** Class CustomTopology init Success</span><br><span class="line">*** <span class="built_in">set</span> ovs protocols =OpenFlow13</span><br><span class="line">*** config SFlow agent</span><br><span class="line">*** Sending topology</span><br><span class="line">*** Ping: testing ping reachability</span><br><span class="line">h1 -&gt; h2 h3 h4</span><br><span class="line">h2 -&gt; h1 h3 h4</span><br><span class="line">h3 -&gt; h1 h2 h4</span><br><span class="line">h4 -&gt; h1 h2 h3</span><br><span class="line">*** Results: 0% dropped (12/12 received)</span><br><span class="line">*** Testing bandwidth between h1 and h4</span><br><span class="line">*** Iperf: testing TCP bandwidth between h1 and h4</span><br><span class="line">*** Results: [<span class="string">'9.34 Mbits/sec'</span>, <span class="string">'10.0 Mbits/sec'</span>]</span><br><span class="line">mininet&gt; </span><br><span class="line">...</span><br></pre></td></tr></table></figure></p>
+<p>脚本产生了一个4个host，2个switch的网络，s1连接着h1,h2,s2连接着h3,h4，s1和s2连接。</p>
+<p>这个时候，就可以用浏览器打开sflow-rt的ip:8008, 点开任意的app可以看到对应监控的信息了,比如点开dashboard-example：</p>
+<p><img src="1.png" alt=""></p>
+<h2 id="流量检测与处理脚本"><a href="#流量检测与处理脚本" class="headerlink" title="流量检测与处理脚本"></a>流量检测与处理脚本</h2><p>接下来就是通过sflow-rt获取流量数据进行处理判断了。<br>流程是：在sflow-rt 定义一个流，然后注册这个流的阈值，这个流超过阈值的时候sflow-rt就会生成对应的事件，然后脚本一直等待得到这个事件，得到后进行处理即可。</p>
+<p>假设模拟的是UDP的泛洪攻击（源端口不变）的检测与防御，那么就向sflow-rt 定义监控 目的ip和源udp端口两个特征。<br>如果超过了这个值，那么就向ryu控制器发送信息（也是通过REST API），增加一个流表项：将这个流的处理动作变成drop，就实现了一次防御。</p>
+<p>具体可以看代码和注释 ddosDection.py：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># coding:utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="string">构建网络后, 通过REST API从sFlow-rt获取flow信息, 发现ddos攻击的时候, 通过REST API给控制器信息修改流表，实现防御</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">测试udp</span></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 处理事件的函数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">handle</span><span class="params">(controller_ip, event)</span>:</span></span><br><span class="line">    ryu = <span class="string">'http://'</span> + controller_ip + <span class="string">':8080/'</span>  <span class="comment"># ryu的默认端口是8080</span></span><br><span class="line">    flowKey = event[<span class="string">'flowKey'</span>]</span><br><span class="line">    dest_ip, source_udp = flowKey.split(<span class="string">','</span>)</span><br><span class="line">    msg = &#123;  <span class="comment"># 定义向控制器发送的信息，添加新的流表项</span></span><br><span class="line">        <span class="string">"dpid"</span>: <span class="number">1</span>,  <span class="comment"># Datapath ID</span></span><br><span class="line">        <span class="comment"># 没有action，默认就是丢掉</span></span><br><span class="line">        <span class="string">'priority'</span>: <span class="number">4000</span>,  <span class="comment"># 优先级调到最高</span></span><br><span class="line">        <span class="string">"hard_timeout"</span>: <span class="number">120</span>,  <span class="comment"># 设置硬生存时间，使当前阻塞只持续两分钟</span></span><br><span class="line">        <span class="string">"match"</span>: &#123;  <span class="comment"># 流表项的匹配域</span></span><br><span class="line">            <span class="string">"dl_type"</span>: <span class="number">0x800</span>,  <span class="comment"># 以太网头的类型0x80，也就是ip协议</span></span><br><span class="line">            <span class="string">"nw_dst"</span>: dest_ip + <span class="string">'/32'</span>,  <span class="comment"># 目的ip</span></span><br><span class="line">            <span class="string">"nw_proto"</span>: <span class="number">17</span>,  <span class="comment"># ip 头的协议类型17， 也就是udp</span></span><br><span class="line">            <span class="string">"tp_src"</span>: source_udp  <span class="comment"># udp的源端口</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    r = requests.post(ryu + <span class="string">'stats/flowentry/add'</span>, data=json.dumps(msg))</span><br><span class="line">    <span class="keyword">if</span> r.status_code == <span class="number">200</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'handle event: blocking the flowKey=%s\n'</span> % flowKey</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'handle event %s fail\n'</span> % flowKey</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行的主函数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">run</span><span class="params">(controller_ip, collector_ip)</span>:</span></span><br><span class="line">    rt = <span class="string">'http://'</span> + collector_ip + <span class="string">':8008'</span>  <span class="comment"># sFlow-rt的默认端口是8008</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 定义一个流的信息, keys为记录的特征，现在设定是 ip目的地址，udp源端口</span></span><br><span class="line">    <span class="comment">#  value 设置的是统计单位为 帧</span></span><br><span class="line">    flow = &#123;<span class="string">'keys'</span>: <span class="string">'ipdestination,udpsourceport'</span>, <span class="string">'value'</span>: <span class="string">'frames'</span>&#125;</span><br><span class="line">    <span class="comment"># 设置流的名字是 udp_test_flow</span></span><br><span class="line">    flow_name = <span class="string">'udp_test_flow'</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 使用REST API 发送给sFlow-rt</span></span><br><span class="line">    status_code = requests.put(<span class="string">'%s/flow/%s/json'</span> % (rt, flow_name), data=json.dumps(flow)).status_code</span><br><span class="line">    <span class="keyword">if</span> status_code != <span class="number">204</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'PUT flow ERROR! status_code is '</span> + str(status_code)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 定义一个阈值信息作为度量值，如果超过了这个阈值就会生成事件发送过来</span></span><br><span class="line">    <span class="comment"># metric 为定义的流名字, value为阈值, byFlow是以流为统计基础</span></span><br><span class="line">    threshold = &#123;<span class="string">'metric'</span>: flow_name, <span class="string">'value'</span>: <span class="number">100</span>, <span class="string">'byFlow'</span>: <span class="literal">True</span>, <span class="string">'timeout'</span>: <span class="number">2</span>&#125;</span><br><span class="line">    <span class="comment"># 设置这个阈值事件的名字为 udp_test</span></span><br><span class="line">    threshold_name = <span class="string">'udp_test'</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 使用REST API 发送给sFlow-rt</span></span><br><span class="line">    status_code = requests.put(<span class="string">'%s/threshold/%s/json'</span> % (rt, threshold_name), data=json.dumps(threshold)).status_code</span><br><span class="line">    <span class="keyword">if</span> status_code != <span class="number">204</span>:</span><br><span class="line">        <span class="keyword">print</span> <span class="string">'PUT threshold ERROR! status_code is '</span> + str(status_code)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 定义这个阈值之后，超过了就会生成一个事件，所以一直循环监控这个事件就可以了</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 事件的url, get参数里指明之前定义的阈值名字， 最大的返回事件个数等</span></span><br><span class="line">    event_url = <span class="string">'%s/events/json?thresholdID=%s&amp;maxEvents=10&amp;timeout=60'</span> % (rt, threshold_name)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># eventID 指明的是下一个接收的event 为 这个eventID 之后的，所以第一次的时候为 -1</span></span><br><span class="line">    eventID = <span class="number">-1</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">print</span> <span class="string">'listening event %s start'</span> % threshold_name</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        r = requests.get(event_url + <span class="string">'&amp;eventID='</span> + str(eventID))</span><br><span class="line">        <span class="keyword">if</span> r.status_code != <span class="number">200</span>:</span><br><span class="line">            <span class="keyword">print</span> <span class="string">'GET events Error! HTTP response code is '</span> + str(r.status_code)</span><br><span class="line">            <span class="keyword">print</span> r.text</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">        events = r.json()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> len(events) == <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># events 为json解析后的一个event的list，序号越小的eventID越大</span></span><br><span class="line">        eventID = events[<span class="number">0</span>][<span class="string">"eventID"</span>]</span><br><span class="line">        events.reverse()</span><br><span class="line">        <span class="keyword">for</span> e <span class="keyword">in</span> events:</span><br><span class="line">            <span class="keyword">print</span> <span class="string">'---------------------'</span></span><br><span class="line">            <span class="keyword">print</span> <span class="string">'time: '</span> + time.strftime(<span class="string">"%Y-%m-%d %H:%M:%S"</span>,</span><br><span class="line">                                           time.localtime(e[<span class="string">'timestamp'</span>] / <span class="number">1000</span>))  <span class="comment"># 毫秒级时间戳除以1000变成秒级</span></span><br><span class="line">            <span class="keyword">print</span> <span class="string">'event: id=%d, thresholdID=%s, metric=%s'</span> % (e[<span class="string">'eventID'</span>], e[<span class="string">'thresholdID'</span>], e[<span class="string">'metric'</span>])</span><br><span class="line">            <span class="keyword">print</span> <span class="string">'threshold = %d , value = %d'</span> % (e[<span class="string">'threshold'</span>], e[<span class="string">'value'</span>])</span><br><span class="line">            ip, udp = e[<span class="string">'flowKey'</span>].split(<span class="string">','</span>)</span><br><span class="line">            <span class="keyword">print</span> <span class="string">'flowKey: ipdestination = %s, udpsourceport = %s'</span> % (ip, udp)</span><br><span class="line">            <span class="keyword">print</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># 处理这个事件</span></span><br><span class="line">            handle(controller_ip, e)</span><br><span class="line"></span><br><span class="line">        time.sleep(<span class="number">1</span>)  <span class="comment"># 等待1s</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    run(<span class="string">'127.0.0.1'</span>, <span class="string">'127.0.0.1'</span>)</span><br></pre></td></tr></table></figure>
+<p>先在刚才mininet的CLI运行：<br>(hping3工具是可以模拟ddos工具，使用前需要先<code>sudo apt install hping3</code>)</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">h1 hping3 --flood --udp -k -s 53 h3</span><br></pre></td></tr></table></figure>
+<p>—flood 是尽可能快得发送， —udp是构造udp模式， -k 保持源端口 -s 53 基础源端口设置53</p>
+<p>然后再运行检测防御的脚本<code>python ddosDection.py</code><br>可以看到, 开始的时候出现流量暴增，当运行了脚本之后，流量下降一大半:<br><img src="3.png" alt=""></p>
+<p>脚本的输出：<br><img src="4.png" alt=""></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总之，实现了脚本自动构建网络，设置sflow代理等。</p>
+<p>在这个架构上，控制器ryu，sFlow收集器sflow-rt，mininet构建的虚拟网络都可以在不同的主机上，设置好ip地址即可。</p>
+<p>不足/需要完善的地方:</p>
+<ul>
+<li>sflow-rt 和 mininet搭建的网络还不能分散在不同的主机上（因为代理用的lo环回测试网卡）</li>
+<li>sflow-rt的REST API和ryu REST API调用还没有熟悉</li>
+</ul>
+<p>附： ryu/app/ofctl_rest.py 提供的REST API</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># REST API</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Retrieve the switch stats</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get the list of all switches</span></span><br><span class="line"><span class="comment"># GET /stats/switches</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get the desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/desc/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get flows desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/flowdesc/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get flows desc stats of the switch filtered by the fields</span></span><br><span class="line"><span class="comment"># POST /stats/flowdesc/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get flows stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/flow/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get flows stats of the switch filtered by the fields</span></span><br><span class="line"><span class="comment"># POST /stats/flow/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get aggregate flows stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/aggregateflow/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get aggregate flows stats of the switch filtered by the fields</span></span><br><span class="line"><span class="comment"># POST /stats/aggregateflow/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get table stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/table/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get table features stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/tablefeatures/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get ports stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/port/&lt;dpid&gt;[/&lt;port&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get queues stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/queue/&lt;dpid&gt;[/&lt;port&gt;[/&lt;queue_id&gt;]]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number and queue id are optional</span></span><br><span class="line"><span class="comment">#       If you want to omitting the port number and setting the queue id,</span></span><br><span class="line"><span class="comment">#       please specify the keyword "ALL" to the port number</span></span><br><span class="line"><span class="comment">#       e.g. GET /stats/queue/1/ALL/1</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get queues config stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/queueconfig/&lt;dpid&gt;[/&lt;port&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get queues desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/queuedesc/&lt;dpid&gt;[/&lt;port&gt;[/&lt;queue_id&gt;]]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number and queue id are optional</span></span><br><span class="line"><span class="comment">#       If you want to omitting the port number and setting the queue id,</span></span><br><span class="line"><span class="comment">#       please specify the keyword "ALL" to the port number</span></span><br><span class="line"><span class="comment">#       e.g. GET /stats/queuedesc/1/ALL/1</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get meter features stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/meterfeatures/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get meter config stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/meterconfig/&lt;dpid&gt;[/&lt;meter_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of meter id is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get meter desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/meterdesc/&lt;dpid&gt;[/&lt;meter_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of meter id is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get meters stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/meter/&lt;dpid&gt;[/&lt;meter_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of meter id is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get group features stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/groupfeatures/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get groups desc stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/groupdesc/&lt;dpid&gt;[/&lt;group_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of group id is optional (OpenFlow 1.5 or later)</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get groups stats of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/group/&lt;dpid&gt;[/&lt;group_id&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of group id is optional</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># get ports description of the switch</span></span><br><span class="line"><span class="comment"># GET /stats/portdesc/&lt;dpid&gt;[/&lt;port_no&gt;]</span></span><br><span class="line"><span class="comment"># Note: Specification of port number is optional (OpenFlow 1.5 or later)</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Update the switch stats</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># add a flow entry</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/add</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify all matching flow entries</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/modify</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify flow entry strictly matching wildcards and priority</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/modify_strict</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete all matching flow entries</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/delete</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete flow entry strictly matching wildcards and priority</span></span><br><span class="line"><span class="comment"># POST /stats/flowentry/delete_strict</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete all flow entries of the switch</span></span><br><span class="line"><span class="comment"># DELETE /stats/flowentry/clear/&lt;dpid&gt;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># add a meter entry</span></span><br><span class="line"><span class="comment"># POST /stats/meterentry/add</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify a meter entry</span></span><br><span class="line"><span class="comment"># POST /stats/meterentry/modify</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete a meter entry</span></span><br><span class="line"><span class="comment"># POST /stats/meterentry/delete</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># add a group entry</span></span><br><span class="line"><span class="comment"># POST /stats/groupentry/add</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify a group entry</span></span><br><span class="line"><span class="comment"># POST /stats/groupentry/modify</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># delete a group entry</span></span><br><span class="line"><span class="comment"># POST /stats/groupentry/delete</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify behavior of the physical port</span></span><br><span class="line"><span class="comment"># POST /stats/portdesc/modify</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># modify role of controller</span></span><br><span class="line"><span class="comment"># POST /stats/role</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># send a experimeter message</span></span><br><span class="line"><span class="comment"># POST /stats/experimenter/&lt;dpid&gt;</span></span><br></pre></td></tr></table></figure>
+<hr/>]]></content>
+      <categories>
+        <category>SDN</category>
+      </categories>
+      <tags>
+        <tag>SDN</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>SDN实验环境搭建</title>
+    <url>/2020/02/19/SDN%E5%AE%9E%E9%AA%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<h2 id="工具选择列表"><a href="#工具选择列表" class="headerlink" title="工具选择列表"></a>工具选择列表</h2><p>操作系统：ubuntu_19.10</p>
+<p>数据平面（虚拟交换机）：OpenvSwitch（OVS）<br>控制器：ryu</p>
+<p>mininet组网工具：mininet是一个用python实现的，可以很快地模拟出OpenFlow交换机（基于Openvswitch）、host以及自定义各种网络拓扑结构。提供命令行CLI和python的API</p>
+<p>sflow-rt：sFlow技术是以设备端口为基本单元的数据流随机采样的流量监控技术。sflow分为sflow agent和sflow collector, sflow agent内嵌在网络设备中将采集的信息封装成sFlow报文发送给sflow collector， sflow-rt为 sflow collector实现的一种工具。</p>
+<a id="more"></a>
+<p>…</p>
+<hr/>
+
+<h2 id="下载系统，安装，更换源"><a href="#下载系统，安装，更换源" class="headerlink" title="下载系统，安装，更换源"></a>下载系统，安装，更换源</h2><p>清华镜像源下载 ubuntu desktop 19.10<br>VMware安装…</p>
+<p>安装之后首先更换源<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo vi /etc/apt/sources.list</span><br></pre></td></tr></table></figure><br>改成：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#阿里云源</span></span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ eoan main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ eoan main restricted universe multiverse</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ eoan-security main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ eoan-security main restricted universe multiverse</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ eoan-updates main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ eoan-updates main restricted universe multiverse</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ eoan-backports main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ eoan-backports main restricted universe multiverse</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ eoan-proposed main restricted universe multiverse</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ eoan-proposed main restricted universe multiverse</span><br></pre></td></tr></table></figure>
+<p>然后更新系统和软件仓库:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt update</span><br><span class="line">sudo apt upgrade</span><br></pre></td></tr></table></figure>
+<p>首先安装的软件是vim, 并且设置vim配置<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install vim vim-gtk</span><br><span class="line">sudo vim /etc/vim/vimrc.local</span><br></pre></td></tr></table></figure></p>
+<p>添加以下内容</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">syntax on</span><br><span class="line"><span class="built_in">set</span> smartindent</span><br><span class="line"><span class="built_in">set</span> cindent</span><br><span class="line"><span class="built_in">set</span> autoindent</span><br><span class="line"><span class="built_in">set</span> tabstop=4</span><br><span class="line"><span class="built_in">set</span> shiftwidth=4</span><br><span class="line"><span class="built_in">set</span> softtabstop=4</span><br><span class="line"><span class="built_in">set</span> number</span><br><span class="line"><span class="built_in">set</span> hlsearch</span><br></pre></td></tr></table></figure>
+<p>安装依赖：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install ssh net-tools python python-pip m4 autoconf libtool git</span><br></pre></td></tr></table></figure>
+<h2 id="安装mininet"><a href="#安装mininet" class="headerlink" title="安装mininet"></a>安装mininet</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install mininet</span><br></pre></td></tr></table></figure>
+<p>然后测试</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yb@ubuntu:~$ mn --version</span><br><span class="line">2.2.2</span><br></pre></td></tr></table></figure>
+<h2 id="安装OpenvSwitch"><a href="#安装OpenvSwitch" class="headerlink" title="安装OpenvSwitch"></a>安装OpenvSwitch</h2><p>从官网下载最新版本：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">wget https://www.openvswitch.org/releases/openvswitch-2.12.0.tar.gz</span><br><span class="line">tar -zxvf openvswitch-2.12.0.tar.gz</span><br><span class="line"><span class="built_in">cd</span> openvswitch-2.12.0/</span><br><span class="line">sudo ./boot.sh</span><br><span class="line">sudo ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc</span><br><span class="line">sudo make &amp; sudo make install</span><br></pre></td></tr></table></figure>
+<p>启动：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$PATH</span>:/usr/share/openvswitch/scripts</span><br><span class="line">ovs-ctl start</span><br></pre></td></tr></table></figure></p>
+<p>配置数据库：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo mkdir -p /usr/<span class="built_in">local</span>/etc/openvswitch</span><br><span class="line">sudo ovsdb-tool create /usr/<span class="built_in">local</span>/etc/openvswitch/conf.db /usr/share/openvswitch/vswitch.ovsschema</span><br></pre></td></tr></table></figure></p>
+<p>初始化数据库：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo ovs-vsctl --no-wait init</span><br></pre></td></tr></table></figure></p>
+<p>最后查看安装状态：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yb@ubuntu:/var/run/openvswitch$ sudo ovs-vsctl show</span><br><span class="line">0e0bf153-77d4-43ff-9795-5085d959712e</span><br><span class="line">    ovs_version: <span class="string">"2.12.0"</span></span><br><span class="line">yb@ubuntu:/var/run/openvswitch$</span><br></pre></td></tr></table></figure></p>
+<h2 id="安装Ryu"><a href="#安装Ryu" class="headerlink" title="安装Ryu"></a>安装Ryu</h2><h3 id="安装之前"><a href="#安装之前" class="headerlink" title="安装之前"></a>安装之前</h3><p>安装之前需要注意pip下载的包的位置的问题：<br>pip下载的时候会保存到用户的 <code>~/.local/lib/python2.7/site-packets</code>，而当用sudo 运行的时候，包的位置没有包含这个位置，所以就会报错。<br>可以用python -m site看到：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yb@ubuntu:~/Downloads$ python -m site</span><br><span class="line">sys.path = [</span><br><span class="line">    <span class="string">'/home/yb/Downloads'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/plat-x86_64-linux-gnu'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-tk'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-old'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-dynload'</span>,</span><br><span class="line">    <span class="string">'/home/yb/.local/lib/python2.7/site-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/local/lib/python2.7/dist-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/dist-packages'</span>,</span><br><span class="line">]</span><br><span class="line">USER_BASE: <span class="string">'/home/yb/.local'</span> (exists)</span><br><span class="line">USER_SITE: <span class="string">'/home/yb/.local/lib/python2.7/site-packages'</span> (exists)</span><br><span class="line">ENABLE_USER_SITE: True</span><br><span class="line">yb@ubuntu:~/Downloads$ sudo python -m site</span><br><span class="line">sys.path = [</span><br><span class="line">    <span class="string">'/home/yb/Downloads'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/plat-x86_64-linux-gnu'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-tk'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-old'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-dynload'</span>,</span><br><span class="line">    <span class="string">'/usr/local/lib/python2.7/dist-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/dist-packages'</span>,</span><br><span class="line">]</span><br><span class="line">USER_BASE: <span class="string">'/root/.local'</span> (doesn<span class="string">'t exist)</span></span><br><span class="line"><span class="string">USER_SITE: '</span>/root/.<span class="built_in">local</span>/lib/python2.7/site-packages<span class="string">' (doesn'</span>t exist)</span><br><span class="line">ENABLE_USER_SITE: True</span><br><span class="line">```	</span><br><span class="line">可见两者差别。</span><br><span class="line"></span><br><span class="line">所以要在安装任何python包之前，将这个用户自己的包位置关掉，就不会出现这个问题了！</span><br><span class="line">```sudo vim /usr/lib/python2.7/site.py</span><br></pre></td></tr></table></figure><br>将ENABLE_USER_SITE的值改为False，即<code>NABLE_USER_SITE = False</code>.</p>
+<hr/>
+
+<p>修改后就可以安装了，这里选择从github上面获取<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/osrg/ryu.git</span><br><span class="line"><span class="built_in">cd</span> ryu</span><br><span class="line">pip install -r tools/pip-requires   <span class="comment">#安装依赖</span></span><br><span class="line">sudo python setup.py install</span><br></pre></td></tr></table></figure><br>装完之后可以输入命令<code>ryu-manager</code>查看是否安装成功</p>
+<h2 id="安装sflow-rt"><a href="#安装sflow-rt" class="headerlink" title="安装sflow-rt"></a>安装sflow-rt</h2><p>首先需要安装java环境</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install openjdk-8-jre-headless openjdk-8-jdk-headless</span><br></pre></td></tr></table></figure>
+<p>然后下载安装sflow-rt<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">wget https://inmon.com/products/sFlow-RT/sflow-rt.tar.gz</span><br><span class="line">tar -zxvf sflow-rt.tar.gz</span><br><span class="line"><span class="built_in">cd</span> sflow-rt</span><br><span class="line">./start.sh <span class="comment"># 启动</span></span><br></pre></td></tr></table></figure><br>然后访问 127.0.0.1:8008/ 可以看到sflow的监控页面，安装成功</p>
+<p>可以选择安装sflow-rt的app，可以看官网<a href="https://sflow-rt.com/download.php">https://sflow-rt.com/download.php</a> 对每个app的介绍<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">./get-app.sh sflow-rt flow-trend</span><br><span class="line">./get-app.sh sflow-rt mininet-dashboard</span><br><span class="line">./get-app.sh sflow-rt ix-metrics</span><br></pre></td></tr></table></figure></p>
+<p>至此工具安装完成</p>
+<p>mininet安装目录：<code>/usr/lib/python2.7/dist-packages/mininet</code></p>
+<p>Ryu安装目录：<code>/usr/local/lib/python2.7/dist-packages/ryu</code></p>
+<p>(可以直接用pip show modules 命令查看安装位置)</p>
+<p>sflow-rt安装目录就是解压的目录</p>
+<hr/>
+
+<h2 id="搭建一个简单的SDN网络"><a href="#搭建一个简单的SDN网络" class="headerlink" title="搭建一个简单的SDN网络"></a>搭建一个简单的SDN网络</h2><p>首先启动sflow-rt监控<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">(path_to_sflow-rt)/start.sh</span><br></pre></td></tr></table></figure></p>
+<p>然后启动ryu的内建app：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ryu-manager (path_to_ryu)/app/simple_switch_13.py</span><br></pre></td></tr></table></figure></p>
+<p>最后用mininet组网，设置控制器为ryu（默认端口6653或6633），openflow版本为1.3，交换机为ovs。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo  mn --switch ovs,protocols=OpenFlow13 --controller=remote,ip=127.0.0.1,port=6653 --custom sflow-rt/extras/sflow.py --topo=tree,depth=3,fanout=2</span><br></pre></td></tr></table></figure>
+<p>pingall，可以看到创建成功<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">b@ubuntu:~$ sudo  mn --switch ovs,protocols=OpenFlow13 --controller=remote,ip=127.0.0.1,port=6653 --custom sflow-rt/extras/sflow.py --topo=tree,depth=3,fanout=2</span><br><span class="line">*** Creating network</span><br><span class="line">*** Adding controller</span><br><span class="line">*** Adding hosts:</span><br><span class="line">h1 h2 h3 h4 h5 h6 h7 h8 </span><br><span class="line">*** Adding switches:</span><br><span class="line">s1 s2 s3 s4 s5 s6 s7 </span><br><span class="line">*** Adding links:</span><br><span class="line">(s1, s2) (s1, s5) (s2, s3) (s2, s4) (s3, h1) (s3, h2) (s4, h3) (s4, h4) (s5, s6) (s5, s7) (s6, h5) (s6, h6) (s7, h7) (s7, h8) </span><br><span class="line">*** Configuring hosts</span><br><span class="line">h1 h2 h3 h4 h5 h6 h7 h8 </span><br><span class="line">*** Starting controller</span><br><span class="line">c0 </span><br><span class="line">*** Starting 7 switches</span><br><span class="line">s1 s2 s3 s4 s5 s6 s7 ...</span><br><span class="line">*** Enabling sFlow:</span><br><span class="line">s1 s2 s3 s4 s5 s6 s7</span><br><span class="line">*** Sending topology</span><br><span class="line">*** Starting CLI:</span><br><span class="line">mininet&gt; pingall</span><br><span class="line">*** Ping: testing ping reachability</span><br><span class="line">h1 -&gt; h2 h3 h4 h5 h6 h7 h8 </span><br><span class="line">h2 -&gt; h1 h3 h4 h5 h6 h7 h8 </span><br><span class="line">h3 -&gt; h1 h2 h4 h5 h6 h7 h8 </span><br><span class="line">h4 -&gt; h1 h2 h3 h5 h6 h7 h8 </span><br><span class="line">h5 -&gt; h1 h2 h3 h4 h6 h7 h8 </span><br><span class="line">h6 -&gt; h1 h2 h3 h4 h5 h7 h8 </span><br><span class="line">h7 -&gt; h1 h2 h3 h4 h5 h6 h8 </span><br><span class="line">h8 -&gt; h1 h2 h3 h4 h5 h6 h7 </span><br><span class="line">*** Results: 0% dropped (56/56 received)</span><br><span class="line">mininet&gt;</span><br></pre></td></tr></table></figure></p>
+<p>ryu-manager的控制台输出packet in 包</p>
+<p>访问本地的 127.0.0.1:8008 ，可以用sflow的app mininet-dashboard看到拓扑和流量监控：</p>
+<p><img src="1.png" alt=""></p>
+<p><img src="2.png" alt=""></p>
+<p>至此简单的SDN实验环境搭建完成。</p>
+<hr/>
+
+
+<p>（附：ubuntu server18.04.4版本安装）<br>其实这些工具都用不到图形界面的，所以说安装server是最省资源的方法。</p>
+<p>首先从清华镜像源下载ubuntu18.04.4-server.iso,用vmware新建虚拟机安装<br>安装的时候会选择源，将默认的改成 <a href="http://mirrors.aliyun.com/ubuntu/">http://mirrors.aliyun.com/ubuntu/</a> 即可。</p>
+<p>安装后先修改字体（控制台字体太小了，看不清），当然，一直用ssh远程访问也行。<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo dpkg-reconfigure console-setup</span><br></pre></td></tr></table></figure><br>弹出之后依次选择 UTF-8，latin1 and latin5 -western Europe and Turkic languages字体，terminusBlod，大小为 11*22 或者别的即可.</p>
+<p>安装依赖<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt install vim gcc ssh net-tools python python-pip python-dev m4 autoconf libtool git  openjdk-8-jre-headless openjdk-8-jdk-headless uml-utilities python-qt4 python-twisted-conch debhelper python-all</span><br></pre></td></tr></table></figure></p>
+<p>配置vim:<code>sudo vim /etc/vim/vimrc.local</code><br>添加：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">syntax on</span><br><span class="line"><span class="built_in">set</span> smartindent</span><br><span class="line"><span class="built_in">set</span> cindent</span><br><span class="line"><span class="built_in">set</span> autoindent</span><br><span class="line"><span class="built_in">set</span> tabstop=4</span><br><span class="line"><span class="built_in">set</span> shiftwidth=4</span><br><span class="line"><span class="built_in">set</span> softtabstop=4</span><br><span class="line"><span class="built_in">set</span> number</span><br><span class="line"><span class="built_in">set</span> hlsearch</span><br></pre></td></tr></table></figure></p>
+<p>配置python包位置：<code>sudo vim /usr/lib/python2.7/site.py</code><br>将line76 ， <code>ENABLE_USER_SITE = None</code> 改为 <code>ENABLE_USER_SITE = False</code></p>
+<p>安装mininet：<code>sudo apt install mininet</code></p>
+<p>安装sflow-rt：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">wget https://inmon.com/products/sFlow-RT/sflow-rt.tar.gz</span><br><span class="line">tar -zxvf sflow-rt.tar.gz</span><br><span class="line"><span class="built_in">cd</span> sflow-rt</span><br><span class="line">./get-app.sh sflow-rt flow-trend <span class="comment"># 安装app</span></span><br><span class="line">./get-app.sh sflow-rt mininet-dashboard</span><br><span class="line">./get-app.sh sflow-rt ix-metrics</span><br><span class="line">./start.sh <span class="comment"># 启动</span></span><br></pre></td></tr></table></figure></p>
+<p>安装ryu：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/osrg/ryu.git</span><br><span class="line"><span class="built_in">cd</span> ryu</span><br><span class="line">pip install -r tools/pip-requires   <span class="comment">#安装依赖</span></span><br><span class="line">sudo python setup.py install</span><br></pre></td></tr></table></figure></p>
+<p>安装ovs：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">wget https://www.openvswitch.org/releases/openvswitch-2.12.0.tar.gz</span><br><span class="line">tar -zxvf openvswitch-2.12.0.tar.gz</span><br><span class="line"><span class="built_in">cd</span> openvswitch-2.12.0/</span><br><span class="line">sudo ./boot.sh</span><br><span class="line">sudo ./configure --prefix=/usr --localstatedir=/var --sysconfdir=/etc</span><br><span class="line">make</span><br><span class="line">sudo make install </span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行</span></span><br><span class="line"><span class="built_in">export</span> PATH=<span class="variable">$PATH</span>:/usr/share/openvswitch/scripts</span><br><span class="line">ovs-ctl start</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置数据库</span></span><br><span class="line">sudo mkdir -p /usr/<span class="built_in">local</span>/etc/openvswitch</span><br><span class="line">sudo ovsdb-tool create /usr/<span class="built_in">local</span>/etc/openvswitch/conf.db /usr/share/openvswitch/vswitch.ovsschema</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化数据库：</span></span><br><span class="line">sudo ovs-vsctl --no-wait init</span><br></pre></td></tr></table></figure>
+<p>最后查看安装状态：<br><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yb@sdn-server:~$ sudo ovs-vsctl show</span><br><span class="line">[sudo] password <span class="keyword">for</span> yb:</span><br><span class="line">fd6b05e7-0737-4230-9c6e-9d8b71816e02</span><br><span class="line">    ovs_version: <span class="string">"2.12.0"</span></span><br><span class="line">yb@sdn-server:~$</span><br></pre></td></tr></table></figure></p>
+<hr/>
+]]></content>
+      <categories>
+        <category>SDN</category>
+      </categories>
+      <tags>
+        <tag>SDN</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>SDN架构与实现4--SDN控制平面与控制器</title>
+    <url>/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B04-SDN%E6%8E%A7%E5%88%B6%E5%B9%B3%E9%9D%A2%E4%B8%8E%E6%8E%A7%E5%88%B6%E5%99%A8/</url>
+    <content><![CDATA[<p>SDN技术将交换设备的控制平面迁移到集中化的控制器中，利用标准化的南向接口替换了交换设备中的控制平面，并在控制器中增加了可编程的北向接口供上层调用。</p>
+<a id="more"></a>
+<h2 id="南向网络控制技术"><a href="#南向网络控制技术" class="headerlink" title="南向网络控制技术"></a>南向网络控制技术</h2><p>控制器的网络控制技术主要包括通过南向接口协议进行链路发现、拓扑管理、策略制定、表项下发等。其中链路发现和拓扑管理主要是控制器利用南向接口的上行通道对底层交换设备上报信息进行统一监控而统计的技术，而策略制定和表项下发则是控制器利用南向接口的下行通道对网络设备实施统一控制的技术。</p>
+<ul>
+<li>链路发现：链路发现是获得SDN全网信息的关键，由控制器统一完成。SDN控制器主要是使用了LLDP链路层发现协议来进行，通过每个交换机传来的信息，创建出完备的网络拓扑图。</li>
+<li>拓扑管理：最主要的就是随时监控和采集网络中SDN交换机的信息，及时反馈网络中的设备工作状态和链路连接状态。为了实现这一目标，控制器需要定时发送LLDP的数据包获知交换机信息。另一个工作是对逻辑组网进行记录，最典型的应用场景是云计算环境下多租户共享网络资源。这些租户网络相关的信息都要在拓扑管理中保存和展现，以反映真实的网络利用状况。</li>
+<li>策略制定：流表是SDN交换机进行数据处理的最基本依据，直接影响了数据转发效率和网络的性能。控制器流表的生成算法成了影响控制器智能化水平的关键因素。<strong>SDN交换机中的流表机制打破了传统网络中的层次化概念，无论是源MAC等二层信息，还是目的IP等三层信息，都统一封装在一个流表项中。</strong>因此，控制器就需要针对不同层次上的网络需求，制定相应的网络转发策略：<ul>
+<li>对于二层网络数据的转发，传统设备的主要工作是学习MAC地址和基于MAC的转发。而SDN中，MAC学习已经在链路控制中实现，所以只需要以目的MAC为依据，将对应的交换机转发端口号写入相应交换机的流表项即可。</li>
+<li>对于三层网络数据的转发，传统设备通常采用“一次路由多次转发”的机制，即交换设备在接受来自源IP的数据包后，查询路由表确定到达目的IP的路由，并通过一定的机制确立源MAC与目的MAC以及转发端口的对应关系，后续在源和目的之间产生的通信由二层模块直接处理。在SDN中，核心是控制器利用相关的路由算法计算出源和目的之间的路由信息，并以IP地址、MAC地址为依据将对应的交换机转发端口写入相应的流表中。</li>
+<li>对于四层网络数据的转发，最主要的是额外考虑每个数据包中包含哪个应用协议的TCP/UDP端口信息。以TCP/UDP端口、IP地址、MAC地址为依据，写入对应交换机流表中。</li>
+</ul>
+</li>
+<li>表项下发：SDN流表下发有主动和被动两种模式<ul>
+<li>主动：在数据包到达交换机之前就进行流表设置，数据包到达的时候交换机已经知道如何处理，消除了数据传输中流表项设置的延迟。</li>
+<li>被动：交换机收到一个数据包且没有与之匹配的流表项时，只能将其送给控制器处理。一旦控制器确定后，相关的信息就返回并缓存在交换机上。</li>
+</ul>
+</li>
+</ul>
+<h2 id="北向业务支撑技术"><a href="#北向业务支撑技术" class="headerlink" title="北向业务支撑技术"></a>北向业务支撑技术</h2><p>通过北向接口，网络业务的开发者能够以软件编程的方式调用局域网、广域网等各种各样的网络资源能力。同时网络资源管理系统可以通过控制器提供的北向接口获知网络资源的工作状态并对网络资源进行调度，实现资源的统一交付，更好地支持云计算等新业务对网络资源的需求。</p>
+<h2 id="东西向控制器扩展技术"><a href="#东西向控制器扩展技术" class="headerlink" title="东西向控制器扩展技术"></a>东西向控制器扩展技术</h2><p>控制器复制对整个SDN的集中化控制，对于把握全局资源视图、改善网络资源交付质量具有非常重要的作用。但控制能力集中化，也使控制器具有了更大的责任，一旦控制器在性能上或安全上得不到保障，随之而来的就是整个SDN的服务能力降级甚至全网瘫痪。另外，从组网架构上来看，单一的控制器也无法应对跨越多个地域的SDN问题。所以需要多台控制器形成的分布式集群，避免单一控制节点造成的可靠性、可扩展性、性能方面的问题。目前用于多个控制器之间的沟通和联系的东西向接口还没有被定义为标准，但是之前的一些集群技术已经可以被用于解决上述的问题。</p>
+<h2 id="开源控制器"><a href="#开源控制器" class="headerlink" title="开源控制器"></a>开源控制器</h2><p>主要的一些开源控制器：</p>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>编程语言</th>
+<th>简介</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Beacon</td>
+<td>java</td>
+<td>Stanford大学开发，采用模块化设计</td>
+</tr>
+<tr>
+<td>Floodlight</td>
+<td>java</td>
+<td>基于Beacon开发，一个企业级的经典SDN控制器</td>
+</tr>
+<tr>
+<td>NodeFlow</td>
+<td>javascript</td>
+<td>基于Nodejs的控制器</td>
+</tr>
+<tr>
+<td>NOX</td>
+<td>C++</td>
+<td>业界第一个SDN控制器</td>
+</tr>
+<tr>
+<td>POX</td>
+<td>python</td>
+<td>NOX的兄弟版本</td>
+</tr>
+<tr>
+<td>Ryu</td>
+<td>python</td>
+<td>NTT公司开发，具有丰富的控制器API</td>
+</tr>
+<tr>
+<td>OpenDaylight</td>
+<td>java</td>
+<td>支持多种南向协议的广义SDN控制平台</td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="Ryu"><a href="#Ryu" class="headerlink" title="Ryu"></a>Ryu</h3><p>Ryu是由日本的NTT公司开发的python的开源SDN控制器，代码的模块清晰，可拓展性强。<br>架构与其他的SDN控制器相似，大致分为控制层和应用层。<br>控制层主要包括协议解析、事件系统、基本网络报文库类等。应用层是基于控制层提供的API编写的网络应用，以及支持Ryu和其他系统协同工作的模块。而且提供了REST API和RPC接口，允许外界进程与Ryu进行通信。可以作为OpenStack的插件，也支持和Snort协同合作。</p>
+<p><img src="ryu.png" alt=""></p>
+<p>Ryu主要组件：</p>
+<ul>
+<li>基本组件</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>组件名</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>base.app_manager</td>
+<td>对其他组件的管理，由ryu-manager自动调用</td>
+</tr>
+<tr>
+<td>controller.dpset</td>
+<td>管理of交换机的组件</td>
+</tr>
+<tr>
+<td>controller.ofp_handler</td>
+<td>对控制器、交换机之间握手、协商过程的处理</td>
+</tr>
+<tr>
+<td>controller.ofp_event</td>
+<td>完成OF消息-事件的转换，提供北向接口 api</td>
+</tr>
+<tr>
+<td>controller.controller</td>
+<td>控制器组件，管理与of交换机连接的安全通道，接受of消息，调用ofp_event并发布相应的事件</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>与of协议相关的组件</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>组件名</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ofproto.v_1_X</td>
+<td>相应协议版本的参数</td>
+</tr>
+<tr>
+<td>ofproto.v_1_X_parser</td>
+<td>定义了相应协议版本消息的封装格式</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>内建应用</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>组件名</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>app.gui_topology.gui_topology</td>
+<td>拓扑发现的GUI模块</td>
+</tr>
+<tr>
+<td>app.simple_vlan</td>
+<td>基本的vlan</td>
+</tr>
+<tr>
+<td>app.tunnel</td>
+<td>多种隧道策略</td>
+</tr>
+<tr>
+<td>app.simple_switch</td>
+<td>简单2层交换机交换策略</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>其他</li>
+</ul>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>组件名</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cmd.*</td>
+<td>命令行相关功能</td>
+</tr>
+<tr>
+<td>lib.*</td>
+<td>报文相关的定义，比如IP，TCP等</td>
+</tr>
+<tr>
+<td>topology.*</td>
+<td>拓扑相关的事件和数据结构，提供对应的API</td>
+</tr>
+<tr>
+<td>app.rest*</td>
+<td>基础的REST API 接口</td>
+</tr>
+<tr>
+<td>app.ofp_rest</td>
+<td>of相关的REST API</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr/>
+
+
+<p>至此，基本理论就大体学完了，下面就开始进行实践了！</p>
+<hr/>]]></content>
+      <categories>
+        <category>SDN</category>
+      </categories>
+      <tags>
+        <tag>SDN</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>SDN架构与实现3--SDN数据平面与交换机</title>
+    <url>/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/</url>
+    <content><![CDATA[<p>传统网络设备的功能模块在生产时就已经固定，只支持有限的用户配置，而不支持用户自定义编程。在传统的路由器和交换机的转发处理都是协议相关的，每个模块都是为了特定的网络协议而设计的，一旦设计完成就只能处理固定格式的网络数据包，无法根据用户需求来支持新的网络协议。所以SDN才有了数控分离的设计，提供了可编程能力。在SDN中，决定网络可编程能力的因素在于数据平面可编程，只有数据平面有了足够的可编程能力，控制平面才能通过南向接口来对网络进行灵活的编程控制。</p>
+<a id="more"></a>
+<p>通用的可编程数据平面支持网络用户通过软件编程的方式任意定义数据平面的功能，包括数据包的解析和数据包的处理等功能，可以实现真正意义上的软件定义网络。为了提供更好的拓展性，通用可编程数据平面设备中所有的网络处理模块，包括包解析器、包转发和包调度，都是可以可编程重配置或者协议无关的，都具有足够的可编程能力。<br>理想的转发模型应该具有以下三个条件：</p>
+<ol>
+<li>清晰的软硬件接口</li>
+<li>简介的硬件接口</li>
+<li>灵活有效的功能实现</li>
+</ol>
+<p><em>The McKeown Group</em>在这个基础上定义了一种可编程通用转发抽象模型：OpenFlow Switch。在SDN可编程数据平面的发展过程中，OpenFlow Switch通用转发模型是现在通用可编程数据平面的代表。到目前为止，业界主流的SDN硬件交换机都实现了OpenFlow Switch通用转发模型的支持，还有业界使用最多的开源软件交换机Openvswitch。</p>
+<h2 id="通用可编程转发模型"><a href="#通用可编程转发模型" class="headerlink" title="通用可编程转发模型"></a>通用可编程转发模型</h2><p>OpenFlow Switch将网络数据转发处理抽象成通用的Match-Action过程，同时对网络系统中各种查找表进行了通用化处理，抽象成一种新的通用表转发模型结构。每个流表都可以实现用户定义的网格处理功能，从而实现可编程的网络数据转发处理。这种模型有四个特征：</p>
+<ol>
+<li>转发行文由控制平面指定</li>
+<li>由基础转发原语组成</li>
+<li>支撑高性能和低功耗</li>
+<li>避免厂商锁定控制程序</li>
+</ol>
+<p>OpenFlow Switch模型主要包括“通用硬件模型”和“通用处理指令”两部分，通用硬件模型由一组网络通用硬件子模型组成。通用处理指令包含了一组用户可编程的网络处理操作和处理指令。</p>
+<h3 id="通用硬件模型"><a href="#通用硬件模型" class="headerlink" title="通用硬件模型"></a>通用硬件模型</h3><p>通用的硬件模型处理流程为：数据包从某个端口进入 $\rightarrow$ 通用模型的协议解析模块完成包头分析 $\rightarrow$ 根据分析结果选择对应的流表处理。<br>在流表内部，解析出的数据包会与每个表项进行比较。如果匹配到了，就执行相应的指令，否则就会按照相应的指令丢弃或者转发给控制器。</p>
+<p>网络通用的处理指令分为三种类型：操作指令、跳转指令和专用指令。操作指令通常是对数据包的具体操作，比如修改转发丢弃等；跳转指令实现在多个流表直接的跳转；专用指令实现某种特定的网络数据流的处理。完成处理之后，将数据包从某个指定端口发出去。</p>
+<h4 id="流水线处理"><a href="#流水线处理" class="headerlink" title="流水线处理"></a>流水线处理</h4><p>“多级流表”优势：因为现有的交换芯片内部通常有多个查找表，比如二层转发表，三层路由表和访问接入控制等，“多级流表”的概念使得芯片更容易支持，资源利用率也高。多个网络应用会根据不同包头域组合，对数据包进行关联处理。并且单一流表会使表非常大，信息冗余。<br>在支持多级流表的OpenFlow Switch通用硬件模型中，每个数据包在进入流水线之前，都将分配一个对应的操作指令集。然后从第0个流表开始，匹配查找，根据定义的操作传给下一个流表或者执行对数据包的处理。</p>
+<h4 id="流表"><a href="#流表" class="headerlink" title="流表"></a>流表</h4><p>OpenFlow Switch通过流（flow）的概念来描述具有相同特征的数据包集合。然后对于flow的处理，OpenFlow Switch定义了流表项（flow Entry）来处理对应的数据流。每个流表有多个流表项组成，用户通过对这些表项进行编程区分flow，同时定义对应的处理指令。<br>每个流表项主要内容有：匹配域，指令集，计数器，优先级，失效时间，cookie，flags等</p>
+<ul>
+<li>匹配域：用来与每个数据包的指定包头标识集合进行比较，包括输入端口，包头标识域和Metadata三部分。</li>
+<li>指令集：指定该flow中的数据包的跳转操作，同时也包括对流表项的操作指令</li>
+<li>计数器：实时统计与流表项匹配成功的数据包数目信息，是分析用户流量的关键信息</li>
+<li>优先级：说明该流表的匹配优先级，当数据包与多个流表项匹配成功时，需要按照优先级来选择出一个流表项。</li>
+<li>失效时间： 指定流表项的失效时间。包括硬生存时间和软生存时间。硬生存时间是超过这个时间就被删除。软生存时间是在规定时间内没有匹配到数据包就被删除。</li>
+</ul>
+<p>在流水线中，流表的跳转指令只能沿着流水线方向进行处理，而不能回退到之前的流表。当流表没有跳转指令时，就对数据包进行具体的操作。所以流水线的最后一个流表不能有跳转指令，从而停止流水线。</p>
+<p>流表子模型本质上是一个面向flow的转发表。</p>
+<h4 id="组表"><a href="#组表" class="headerlink" title="组表"></a>组表</h4><p>组表是一种转发表的抽象子模型，具备给一组端口定义某种指定操作的抽象能力，从而便捷实现组播，负载均衡，重定向等功能。</p>
+<p>每个流表项包括：组号（Group Identifier），计数器（Counters），组类型（Group Type），操作桶（Action Buckets）。<br>组类型有四种：</p>
+<ul>
+<li>全选类型（All）：执行Action Buckets里所有的操作动作集，可以用来实现网络中的组播和广播功能。对应的flow数据包会直接复制到每个Action Bucket里。如果某个Action Buckets将数据包直接转发给输入端口就不复制这个包。</li>
+<li>选择类型（Select）：只选择执行一个Action Buckets的动作集，通常用交换机自己的算法来选择。</li>
+<li>间接类型（Indirect）：只能支持一个Action Buckets，用来实现多个流表项或多个组表项指向单一组表ID的情况。</li>
+<li>快速恢复类型（Fast Failover）：只执行第一个激活的Action Bucket。能让转发模型自己调整转发操作，不需要每次请求控制器。多用于容灾备份的场景。</li>
+</ul>
+<p>组表子模型也是一种转发表，只是表项定义与流表的内容不同。</p>
+<h4 id="Meter表"><a href="#Meter表" class="headerlink" title="Meter表"></a>Meter表</h4><p>Meter表是第三种转发表类型的抽象子模型，其使得OpenFlow Switch模型具备测量Flow的能力，可以用来实现速率控制等简单的Qos服务，也可以实现相对复杂的Qos服务。</p>
+<p>每个Meter表项由三个部分：计量标识（Meter Idendifier），计数器（Counters），计量带（Meter Bands）。<br>每一个计量带有bandtype，rate，counters和band type可选参数四部分组成。rate为一个网络数据流的传输速率阈值。Band Type定义了一种对应的包处理方式，通常只有网络数据流当前流量速率超过这个速率阈值时，才会执行BandType的操作。</p>
+<h4 id="状态信息表"><a href="#状态信息表" class="headerlink" title="状态信息表"></a>状态信息表</h4><p>OPenFlow模型里面定义了大量的计数器，分别由流表、流表项、端口、队列、Group、Group Bucket、Meter和计量带维护着。这些计数器合起来就构成了一个状态信息表。其中有一个特殊的计数器Duration计数器，记录流表项、端口、队列、Group和Meter的存活时间，精度通常是纳秒。计数器的实现可以用软件，也可以用硬件。</p>
+<h4 id="端口"><a href="#端口" class="headerlink" title="端口"></a>端口</h4><p>端口子模型是网络设备常见的模型，是其他网络设备和OpenFlow Switch的网络接口，通用硬件模型通过端口连接在一起（逻辑上的连接）。<br>OpenFlow Switch模型定义了物理端口（Physical Port）、逻辑端口（Logical Port）和保留端口（Reserved Port）三种端口类型。所有物理端口、逻辑端口和保留端口中的本地类型统称为标准端口，只有这些端口才能用作网络数据包的输入和输出端口，才能在组表中使用并且拥有端口计数器、端口状态和配置信息。<br>物理端口是物理网络中的真实网络接口，与网络中的物理接口一一对应；逻辑端口是一种抽象的端口，用作描述链路聚合组、隧道和回环接口等逻辑概念；保留端口是OpenFlow Switch模型中预留的虚拟端口类型。</p>
+<p>总之，OpenFlow Switch通用硬件模型定义了一组抽象的子模型来描述这个网络通用转发模型。其中包括三种特殊的转发表（流表、组表、Meter表），计数器组成的状态信息表和端口子模型。</p>
+<h3 id="通用处理指令"><a href="#通用处理指令" class="headerlink" title="通用处理指令"></a>通用处理指令</h3><p>OpenFlow Switch通用处理指令包括：网络处理控制指令Instructions，网络数据操作指令Actions和专用网络处理指令三部分。</p>
+<h4 id="网络处理控制指令"><a href="#网络处理控制指令" class="headerlink" title="网络处理控制指令"></a>网络处理控制指令</h4><p>OpenFlow Switch定义的第一种是基于Flow的网络处理流程控制指令Instructions，这种指令控制数据包在通用硬件模型流水线上的处理流程。<br>控制指令有两种：</p>
+<ol>
+<li>对Flow数据包的操作指令集的写入，应用删除等修改操作指令，比如写操作（Write-Actions），应用操作指令（Apply-Actions）。</li>
+<li>指定flow数据包在多个表中的处理顺序和跳转指令，比如Goto-Table指令。</li>
+</ol>
+<p>每个流表项包括多个控制指令，组成对应的指令集和。</p>
+<h4 id="操作指令"><a href="#操作指令" class="headerlink" title="操作指令"></a>操作指令</h4><p>OpenFlow Switch定义的第二种是基于Flow的网络处理操作指令Actions。这种操作指令完成对数据包的丢弃、复制、转发和修改等操作。每一个数据包进入流水线后就分配一个Action Set，用于保存处理数据的动作，其集合中同一类型的动作只有一个。此外还可以是Action List，同一类型的动作数目不受限制。</p>
+<p>包含的指令主要有：Output <em>port num</em> 转发到某个端口，Group <em>group id</em> 发送到指定的group表项处理，Drop 丢掉….</p>
+<h4 id="专用指令"><a href="#专用指令" class="headerlink" title="专用指令"></a>专用指令</h4><p>第三种是基于flow的专用指令。这种专用指令通过一条指令实现特定网络的处理功能。<br>典型有Table Miss指令。Table Miss定义了在流表中匹配不成功时，网络数据包的处理行为。</p>
+<p>总之，OpenFlow Switch只是定义了一种通用的可编程转发模型，对于数据包解析协议和包调度模块还不具备编程能力，所以依然有很大的发展空间。</p>
+<h2 id="通用的可编程数据平面"><a href="#通用的可编程数据平面" class="headerlink" title="通用的可编程数据平面"></a>通用的可编程数据平面</h2><p>当下的OpenFlow Switch模型还不具备协议无关网络数据处理，还不能成为完全的通用可编程数据转发模型。P4编程语言框架、POX协议无关转发等，都在不断探索完善中。</p>
+<h2 id="白盒交换机"><a href="#白盒交换机" class="headerlink" title="白盒交换机"></a>白盒交换机</h2><p>白盒交换机（White Box Switch），又称开放网络交换机，只有硬件而软件需要自定义安装，是网络交换机硬件和操作系统解耦合的结果。在网络领域，通常是交换机硬件和操作系统紧紧绑定在一起销售，在SDN架构的推动下，White Box Switch模式使得用户可以自主选择交换机硬件和操作系统。在近几年的SDN发展中，白盒交换机成为了新的发展趋势。</p>
+]]></content>
+      <categories>
+        <category>SDN</category>
+      </categories>
+      <tags>
+        <tag>SDN</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>SDN架构与实现2--SDN南向协议</title>
+    <url>/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/</url>
+    <content><![CDATA[<h2 id="SDN南向协议"><a href="#SDN南向协议" class="headerlink" title="SDN南向协议"></a>SDN南向协议</h2><p>SDN架构中，网络的控制平面和数据平面相分离，通过南向协议进行通信。南向协议提供的可编程能力是SDN可编程能力的决定因素，所以南向协议是SDN最核心、最重要的接口标准之一。<br>南向协议尝试为网络数据平面提供统一的、开放的和具有更多编程能力的接口，使得控制器可以基于这些接口对数据平面设备进行编程控制，指导网络流量的转发等行为。<br>南向协议可以根据可编程能力分为狭义的南向协议和广义的南向协议。<br>狭义的南向协议是具有确切的对数据平面的编程能力，指导数据平面设备的转发操作等行为。典型的是Openflow协议。POF协议和P4协议也属于狭义的南向协议的范围，但是这两个比SDN南向协议更具有通用的抽象能力，能力范围已经超越了狭义南向协议的定义，所以并不能简单归类到这里（分类是完全可编程的南向协议）。<br>广义的南向协议主要是三种类型：</p>
+<ol>
+<li>仅具有对数据平面配置能力的南向协议，如：OF-Config，OVSDB，NET-CONF</li>
+<li>具有部分可编程能力的协议，如：OpFlex</li>
+<li>本来就存在，不限于应用在SDN控制平面和数据平面通信的协议，如：PCEP，XMPP</li>
+</ol>
+<a id="more"></a>
+<h2 id="狭义SDN南向协议"><a href="#狭义SDN南向协议" class="headerlink" title="狭义SDN南向协议"></a>狭义SDN南向协议</h2><p>狭义南向协议的代表是Openflow，2008年<em>Nick McKeown</em>教授在论文中第一次介绍了这个协议，论文介绍了Openflow的原理，包括Openflow交换机和Openflow控制器的设计。Openflow是第一个SDN控制平面和数据平面交互的通信接口，也是目前最流行的SDN南向协议。</p>
+<p>在Openflow 1.0版本中定义了Openflow交换机，流表和Openflow通道，到了1.3版本又增加了组表和Meter表这两种新表。</p>
+<h3 id="Openflow表"><a href="#Openflow表" class="headerlink" title="Openflow表"></a>Openflow表</h3><h4 id="流表"><a href="#流表" class="headerlink" title="流表"></a>流表</h4><p>流表（Flow Table）是交换机用于存储流表项的表。在Openflow1.0版本中仅有一张流表（单流表）。由于单流表可以支持的程序逻辑太简单，无法满足复杂的业务逻辑，所有在Openflow1.1版本中又增加了多级流表的概念。多级流表使数据包的处理逻辑划分成多个子逻辑，分成多个表来处理，使数据包的处理变成了一条流水线。<br>流表中由匹配域、指令集和计数器三个主要部分及其他部分组成（优先级、计时器等）。<br><strong>网络数据表进入交换机之后会匹配流表中的流表项，匹配到同一条流表的数据包称为数据流Data Flow，简称Flow。</strong><br>匹配域用于区分不同的数据流，匹配成功之后执行对应的指令，完成对数据的处理。</p>
+<p>匹配域原先叫做包头域，（1.0协议里）包括12个元组：入端口（Ingress Port），源MAC地址（Ether Source），目的MAC地址（Ether Des），以太网类型（Ether Type），VLAN ID（VLAN ID），VLAN优先级（VLAN Priority），源IP地址（IP Src），目的IP地址（IP Dst），IP协议（IP Proto），IP TOS位（IP Tos bits），TCP/UDP源端口（TCP/UDP Src Port）,TCP/UDP目的端口（TCP/UDP Dst Port）</p>
+<h4 id="组表"><a href="#组表" class="headerlink" title="组表"></a>组表</h4><p>组表（Group Table）是定义一组动作，且这组动作可被多条流表项共同使用，从而实现组播、负载均衡、聚合等功能。结构有：组表号，类型，计数器和动作桶。 组表的存在降低了流表的逻辑复杂度，也减少了流表的存储空间。</p>
+<h4 id="Meter表"><a href="#Meter表" class="headerlink" title="Meter表"></a>Meter表</h4><p>Meter表（Meter Table）用于计量和限速，其结构有：计量表号，计量带和计数器。Meter表项针对流制定对应的限速等规则，从而实现丰富的Qos功能。Meter表是面向流的，更细致灵活。</p>
+<h3 id="Openflow通道"><a href="#Openflow通道" class="headerlink" title="Openflow通道"></a>Openflow通道</h3><p>Openflow通道是控制器和交换机通信的通道，通道中转发的数据为Openflow消息（Openflow报文）。 Openflow报文分为 <strong>Controller-to-Switch、Asynchronous、Symmetric</strong>三大类。Controller-to-Switch类型的报文主要是由控制器初始化并发送给交换机，Asynchronous类型报文主要是交换机异步上报给控制器的报文，Symmetric类报文是无需等待对方请求、双方都可以任意发送的报文。</p>
+<h4 id="Controller-to-Switch报文"><a href="#Controller-to-Switch报文" class="headerlink" title="Controller-to-Switch报文"></a>Controller-to-Switch报文</h4><p>Controller-to-Switch 报文是控制器初始化并下发给交换机的报文类型。其可能会要求交换机回复对应的报文。主要类型：</p>
+<ul>
+<li>Features：Features类型的报文主要分Request和Reply两种，其中控制器可以主动初始化并发送Feature_Request 报文，请求交换机回复其特性信息，交换机收到后将通过Feature_Reply报文回复交换机的特性和交换机端口特性信息。通常控制器会在交换机的Openflow连接建立完成之后马上发送一个请求报文来获取交换机的特征信息。</li>
+<li>Configuration： 其包含请求、回复和设置三种报文。控制器可以设置和请求交换机的配置信息，交换机则需执行配置和回复配置报文。</li>
+<li>Modify-State：读取状态信息，由控制器发出，用于获取交换机的状态信息，包括流表、组表、Meter表及端口的统计信息。</li>
+<li>Packet-out：由控制器发出，用于将数据包发送到交换机的指定端口。一般用于相应Packet-in报文的处理，经常跟在Flow-mod报文之后，用于指挥交换机将缓存数据发送或直接发送数据。Packet-out还需要携带指导数据处理的动作集，如果动作集为空则交换机会将数据包丢弃。</li>
+<li>Barrier：Barrier Request/Reply 用于确保操作顺序执行。控制器可以向交换机发送Request报文，交换机收到后将request报文之前的报文处理完成之后，再处理Barrier Request请求。回复控制器一个Barrier Reply报文，其报文ID和请求报文一致，告知控制器在Barrier Request报文之前到来的报文已经处理完成。类似于设置一个障碍或触发器，确保动作执行顺序，保持策略的一致性。</li>
+<li>Role-Request： 用于控制器请求其自身在交换机端的角色，也用于设置控制器的角色。一般用于交换机在与多控制器有连接的场景。</li>
+<li>Asynchronous-Configuration：异步配置报文可以用来配置异步报文的过滤器，从而使得在多控制器场景下，控制器可以选择性过滤异步报文，只接收感兴趣的报文。</li>
+</ul>
+<h4 id="Asynchronous报文"><a href="#Asynchronous报文" class="headerlink" title="Asynchronous报文"></a>Asynchronous报文</h4><p>Asynchronous报文是由交换机异步发送给控制器的报文，无须等待控制器请求。交换机通过异步报文告知控制器新数据包的到达和交换机状态的改变。主要类型：</p>
+<ul>
+<li>Packet-in：将数据包发给控制器。在支持单流表的Openflow协议中，触发Packet-in 的原因可能是流表项的动作指导，也可能是因为匹配不到流表项。但在高版本的多级流表设计下，将默认下发一条Table-Miss流表项。其匹配域均为空，任何报文都能匹配成功。Table-Miss作用是将匹配其他流表失败的数据发给控制器。若交换机配置信息中指示将数据包缓存在交换机上，则Packet-in报文还将携带着指定长度的数据包数据及其在交换机上缓存的Buffer_id，携带的数据包默认长度是128字节。若交换机不缓存数据包，则Packet-in会携带全部数据并发送给控制器。Packet-in通常会触发Packet-out报文或者Flow-mod报文。</li>
+<li>Flow-Removed：当OFPFF_SEND_FLOW_REM标志位被置位的时候，交换机将会在流表项失效时通知控制器流表项被移除的消息。触发流表项失效的原因可以是控制器主动删除或者流表项超时。</li>
+<li>Port-status：当端口配置或者状态变化时，用于告知控制器端口状态发生改变。</li>
+<li>Pole-status：当控制器角色发生变换时，交换机告知控制器其角色变换。</li>
+<li>Controller-Status：当Openflow连接发生变化时，通知控制器。</li>
+<li>Flow-monitor：告知控制器流表的改变。控制器可以设置一系列监视器来追踪流表的变化。</li>
+</ul>
+<h4 id="Symmetric报文"><a href="#Symmetric报文" class="headerlink" title="Symmetric报文"></a>Symmetric报文</h4><p>控制器和交换机双方都可以发送，无须得到对方的许可或请求。主要类型：</p>
+<ul>
+<li>Hello：Openflow通道建立初期，用于协商版本等内容。</li>
+<li>Echo：Echo Request/Reply 任意一方发出，每个Request都需要Reply回复，主要是保持连接的活性，也可以支持携带消息内容，用于时延或带宽测试。</li>
+<li>Error：错误报文用于告知对方错误。一般多用于交换机告知控制器请求发生的错误。</li>
+<li>Experimenter： 实验报文是报文功能范围之外的标准方式，可以用于实验场景。</li>
+</ul>
+<h3 id="Openflow通信流程"><a href="#Openflow通信流程" class="headerlink" title="Openflow通信流程"></a>Openflow通信流程</h3><p>交换机和控制器建立完socket通信之后，会相互发送Hello报文，协商版本协议。当版本协议协商之后，控制器会向交换机下发Feature Requet报文，交换机需回复Feature Reply报文。控制器根据交换机支持的特性，可以完成交换机的相关配置。配置完成之后，进入正常的通信状态。如果Openflow版本支持多流表，控制器还会下发Table-Miss流表项到交换机。<br>当交换机匹配流表失败或者匹配到Table-Miss时，交换机会将其Packet-in到控制器，控制器根据当前逻辑选择回复Packet-out或者下发Flow-mod指导交换机处理数据流。如果配置了Flow-Removed标志位，则当流表过期时，交换机会向控制器回复Flow-Removed报文。<br>其他异步报文发生在任意时刻。为了保持连接活性，会周期性地发出Echo报文。</p>
+<h2 id="广义的SDN南向协议"><a href="#广义的SDN南向协议" class="headerlink" title="广义的SDN南向协议"></a>广义的SDN南向协议</h2><h3 id="OF-Config"><a href="#OF-Config" class="headerlink" title="OF-Config"></a>OF-Config</h3><p>在Openflow协议的规范中，控制器需要和配置完成的交换机进行通信。交换机正常工作前需要对其功能、特性及资源进行配置才能正常工作。这些配置超出了Openflow协议的范围。OF-Config（Openflow Management and Configuration Protocol）协议就是一种Openflow 交换机配置协议。<br>作为Openflow的伴侣协议，OF-config很好填补了Openflow协议之外的内容。在Openflow协议的SDN框架中，需要如OF-Config这样的配置协议来完成交换机的配置工作，包括配置控制器信息等内容。当交换机和控制器建立连接之后，将通过Openflow协议来传递信息。OF-Config是对Openflow协议的补充，但是设计动机、设计目的和实现方式都不一样。有些Openflow逻辑交换机的属性均可以通过Openflow协议和OF-Config协议来配置，所以两个协议有一些重叠的功能。</p>
+<h3 id="OVSDB"><a href="#OVSDB" class="headerlink" title="OVSDB"></a>OVSDB</h3><p>OVSDB（The Open vSwitch Database Management Protocol, OVS的数据库管理协议）是专门用于Openvswitch的管理和配置的协议。OVSDB和OF-Config类似，都是Openflow交换机配置协议，但两者也有区别：OVSDB仅用于OVS的配置和管理，而OF-Config可以用于所有支持OpenFlow的软件和硬件的交换机。<br>随着虚拟机及Docker等虚拟化技术在数据中心及实验环境中越来越普及，OVS作为虚拟机和Docker与物理网络通信的关键节点越来越重要，所以专门用来配置OVS的协议OVSDB在未来也越来越重要。</p>
+<h3 id="NETCONF"><a href="#NETCONF" class="headerlink" title="NETCONF"></a>NETCONF</h3><p>为了弥补SNMP的不足，IETF提出的一个基于XML的NETCONF协议，具有很强的数据描述能力和良好的扩展性。因为在网络配置方面高效，所以成为了许多网络设备的配置协议，被多种SDN控制器支持。但是它无法指导交换机进行数据转发处理，它的定位还是和OVSDB，OF-Config类似。对于传统设备而言，NETCONF可以配置之后即可工作，对于SDN设备而言，还需要Openflow等协议来指导交换机的数据交换功能。</p>
+<h4 id="OpFlex"><a href="#OpFlex" class="headerlink" title="OpFlex"></a>OpFlex</h4><p>OpFlex是思科提出来的一个可扩展的SDN南向协议，用于控制器和数据平面设备直接交换网络策略。OpFlex是一种声明式控制协议，而Openflow则是一种命令式控制。声明式控制是只通知对象要达到一种要求状态，但是没有规定其通过指定的方式去达到这个状态。本质上是一种SDN南向协议，但是其具有的可编程能力不强，且采用OpFlex架构的终端依然是底层的智能设备，所以OpFlex只能归类于广义的SDN南向协议范畴。</p>
+<h4 id="XMPP"><a href="#XMPP" class="headerlink" title="XMPP"></a>XMPP</h4><p>XMPP（Extensible Messaging and Presence Protocol）是一种以XML为基础的开放式即时通讯协议。由于其自身具有良好的扩展性，从而可以被灵活应用到即使通讯、网络设备管理等多种场合。XMPP不是专门为SDN设计的，因为其良好的扩展性，逐渐成为SDN南向协议的一种。优点是可以统一管理传统设备和SDN设备。用户的网络可能存在大量的传统设备，采用兼容性良好的XMPP可以统一管理，从而保护用户的已有资产，这是XMPP作为南向协议最大优势之一。不过功能粒度相比于Openflow还很粗。</p>
+<h4 id="PCEP"><a href="#PCEP" class="headerlink" title="PCEP"></a>PCEP</h4><p>PECP（Path Computation Element Communication Protocol）是由IETF提出的路径计算单元通信协议，常为流量工程提供路径计算服务。PECP的设计具有很好的弹性和可扩展性，易于拓展。PCEP把路径计算的控制逻辑从转发设备抽离到远端，实现了部分的数据平面和控制平面的分离。通过远端服务器的软件编程，可以指导底层路由或转发设备实现数据的转发和路由，所以也属于一种广义的SDN南向协议。但PECP可编程能力还不完善，也不是专门为SDN设计的。</p>
+<h3 id="完全可编程的南向协议"><a href="#完全可编程的南向协议" class="headerlink" title="完全可编程的南向协议"></a>完全可编程的南向协议</h3><h4 id="POF"><a href="#POF" class="headerlink" title="POF"></a>POF</h4><p>POF（Protocol Oblivious Forwarding）是由华为宋浩宇等人提出来的SDN南向协议，是一种实现方式。与OpenFlow相似，在POF定义的架构中分为控制平面的POF控制器和数据平面的POF转发元件。POF是协议无关的协议，在POF架构中，POF交换机没有协议的概念，仅仅是在POF控制器的指导下通过{offset,length}来定位数据、匹配并执行对应的操作。此举使交换机在不关心网络协议的情况下完成网络数据的处理，使得在支持新协议的时候无须岁交换机进行升级，只需要升级控制平面即可。</p>
+<p>在原先的OpenFlow协议里，1.0版本12个匹配域，1.3版本40个匹配域。随着技术的发展，还会有更多的协议需要支持，那匹配域也需要增加。不断增加的匹配域使得OpenFlow协议越来越复杂，而且设备厂家需要开发出新的交换机来支持新的协议。原先OpenFlow数据平面和控制平面分离不够彻底，数据平面交换机依然需要掌握协议的语义等控制信息才能完成数据匹配。</p>
+<p>POF通过通用指令集来实现协议无关转发的设计，使交换机具有完全的可编程能力。控制器通过南向协议对交换机进行编程，包括协议解析和对应数据流处理规则的编程。当网路中需要支持新协议时，只需要通过控制器进行编程就可实现，大大缩短了网络创新的周期。而对于运营商或者服务提供商而言，在添加新的网络服务的时候不用再联系厂商，也不用购买新的交换设备了。</p>
+<h4 id="P4"><a href="#P4" class="headerlink" title="P4"></a>P4</h4><p>P4是由Pat Bosshart等人提出的“协议无关数据包处理编程语言”。定义了一系列语法，也开发出了P4的编译器，支持对P4转发模型的协议解析过程和转发过程进行编程定义，实现了真正意义上的协议无关可编程网络数据平面。和POF相似，只不过侧重点不同。POF通过{offset,length}来确定待匹配数据，强调协议无关，而P4不仅有底层高度抽象的协议无关指令集，更侧重于网络数据平面编程语言的建模。P4和POF的出现，给网络带来更强大的可编程能力，是必然趋势，是不可阻挡的。</p>
+<hr/>]]></content>
+      <categories>
+        <category>SDN</category>
+      </categories>
+      <tags>
+        <tag>SDN</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>SDN架构与实现1--SDN介绍</title>
+    <url>/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B01--SDN%E4%BB%8B%E7%BB%8D/</url>
+    <content><![CDATA[<p>（SDN介绍）</p>
+<a id="more"></a>
+<h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><h3 id="网络基础理论知识"><a href="#网络基础理论知识" class="headerlink" title="网络基础理论知识"></a>网络基础理论知识</h3><p>基础的理论知识就是计网的知识啦<br>首先是OSI七层模型（理想模型），TCP/IP网络模型</p>
+<p>分层：</p>
+<ul>
+<li>物理层：规定着为传输数据所需要的物理链路创建，维持，拆除，而提供的具有机械，电子，功能和规范的特性，主要是关心<strong>如何</strong>传递信号。</li>
+<li>数据链路层：主要是规定相邻节点的数据帧封装和差错控制。</li>
+<li>网络层：负责路由将报文分组转发给目标主机或网络。</li>
+<li>传输层：负责对报文进行重组，建立应用程序之间端到端的连接。</li>
+<li>应用层：向用户提供应用程序。</li>
+</ul>
+<p>主要的协议：以太网，IP，ARP，RARP，ICMP，TCP，UDP，DNS，DHCP等</p>
+<p>设备：<br>物理层(L1)：中继器（repeater），集线器（hub）<br>链路层(L2)：网桥（bridge），交换机（switch）<br>网络层(L3)：路由器（router）</p>
+<h3 id="交换机"><a href="#交换机" class="headerlink" title="交换机"></a>交换机</h3><p>交换机是最重要的信息交换网络设备，主要功能有：<br>学习设备的MAC地址<br>二层转发<br>三层转发<br>ACL（访问控制列表，基于包过滤的访问控制技术）<br>Qos（服务质量）<br>消除回路</p>
+<p>随着SDN和NFV的发展，越来越多的功能放在了虚拟交换机上，现在最常用的虚拟交换机是Openvswitch。</p>
+<h4 id="三层交换机和路由器"><a href="#三层交换机和路由器" class="headerlink" title="三层交换机和路由器"></a>三层交换机和路由器</h4><p>三层交换机也和传统的二层交换机不一样，支持三层转发（路由功能），是工作在网络层的。<br>与路由器的区别：</p>
+<ul>
+<li>三层交换机同时支持二层三层转发，而路由器只支持三层转发</li>
+<li>三层交换机的功能不如路由器，路由器还会有防火墙等各种功能，更适合网络复杂的场景下，而交换机的主要功能还是数据交换。</li>
+<li>三层交换机的转发性能比路由器好，非常适合大型局域网内的数据路由和交换。</li>
+</ul>
+<h3 id="传统的网络架构及其缺陷"><a href="#传统的网络架构及其缺陷" class="headerlink" title="传统的网络架构及其缺陷"></a>传统的网络架构及其缺陷</h3><p>传统的网络是分布式的架构，没有控制中心，每台设备都包含独立的控制平面和数据平面：这里的分布式是指，用于路由器计算的控制平面和报文转发的数据平面，都位于同一台设备中。路由计算和拓扑变化后，每台设备都要重新计算路由，每台设备都是独立收集网络信息，独立计算，只关心自己的选路。这种的弊端就是所有的设备在计算路径的时候缺乏统一性。<br>传统的通常部署网管系统作为管理平面，控制平面和数据平面分布在每一台设备上。</p>
+<p>现在主要面临的是四个问题：</p>
+<ol>
+<li>传统网络部署管理困难<br>不同厂商的网络设备混杂在一起使用，但是不同的厂商的设备都是通过不同的方式去部署，命令也不一致，每台设备都要单个部署。管理这些设备，大多都是通过网管软件来管理，生成网络的拓扑图，知道哪一台设备在哪里，出现故障能够报警。但是更多的是侧重于监控，而不是分配和部署，也就是说，如果知道故障在哪里，还是需要人为去修理。</li>
+<li>分布式架构出现性能瓶颈<br>典型的分布式架构，都是通过设备之间互相交换信息，然后每个进行独立计算。但是现在流量剧增，设备也是数量不断增多，当有设备变动的时候，路由收敛的时间越来越长，路由的效率也越来越低。</li>
+<li>流量控制非常难<br>流量均衡负载难，流量路径的灵活调整能力不足。而且不能可视化，网管软件只能监视故障，而不能检查全局全网的链路状态。</li>
+<li>无法对设备进行编程<br>传统的网络设备，工作方式都是厂商决定的，用户自定义的转发策略等都不能灵活改变。买来设备的时候，里面支持的协议都已经被订好，不能通过安装软件的方式增加设备的功能。就算可以也要通过重装OS等复杂的手段来实现。</li>
+</ol>
+<p>总之，传统网络出现的许多局限性，促使了SDN的诞生。</p>
+<h2 id="SDN定义"><a href="#SDN定义" class="headerlink" title="SDN定义"></a>SDN定义</h2><p><strong>SDN（Software Defined Networking，软件定义网络）</strong> 是一种新兴的基于软件的网络架构及技术，其最大的特点就是在于具有松耦合的控制平面和数据平面、支持集中化的网络状态控制、实现底层网络设施对上层应用透明。<br>上面只是其中的一个定义，SDN有着几个组织对它的不同定义，但是本质上没有太大的差别，都强调了SDN拥有数据平面和控制平面分离的特点，也都强调了支持通过软件编程对网络进行控制的能力。SDN主要有三个特征：</p>
+<ol>
+<li>网络开放可编程：SDN建立了新的网络抽象模型，为用户提供了一套完整的通用API，使用户可以在控制器上编程实现对网络的配置、控制和管理，从而加快网络业务的部署的进程。</li>
+<li>控制平面和数据平面分离：控制平面和数据平面不再相互依赖，两者可以独立完成体系结构的演进，双方只要规定一个统一开放的接口进行通信即可。控制平面和数据平面的分离是SDN架构区别于传统网络体系结构的重要标志，是网络获得更多可编程能力的架构基础。</li>
+<li>逻辑上的集中控制：主要是指对分布式网络状态的集中统一管理。在SDN架构中，控制器会担负起收集和管理所有网络状态信息的重任。逻辑的集中控制为软件定义网络功能提供了架构基础，也为网络自动化管理提供了可能。</li>
+</ol>
+<p>因此，只要符合以上三个特征的网络都叫软件定义网络。在这三个特征中，控制平面和数据平面分离为逻辑集中控制创造了条件，逻辑集中控制为开放可编程控制提供了架构基础，而网络开发可编程才是SDN的核心特征。</p>
+<h2 id="SDN体系结构"><a href="#SDN体系结构" class="headerlink" title="SDN体系结构"></a>SDN体系结构</h2><p>SDN网络体系结构主要包括SDN网络应用、北向接口、SDN控制器、南向接口和SDN数据平面五个部分。</p>
+<ol>
+<li><p>SDN网络应用层实现了对应的网络功能应用，这些应用通过调用SDN控制器的北向接口，实现对网络数据平面设备的配置、管理和控制。</p>
+</li>
+<li><p>北向接口是SDN控制器与网络应用程序之间的开放接口，它将数据平面资源和状态信息抽象层统一的开放编程接口。</p>
+</li>
+<li><p>SDN控制器是SDN的大脑，也称作网络操作系统。控制器不仅要通过北向接口给上层网络应用提供不同层次的可编程能力，还要通过南向接口对SDN数据平面进行统一配置、管理和控制。SDN控制器负责整个网络的运行，是提升SDN网络效率的关键。当前有许多基于openflow控制协议的开源控制器的实现，比如NOX，POX等，他们都有各自的特色设计，能够实现链路发现、拓扑管理、表项下发等SDN运行的基本操作。</p>
+</li>
+<li><p>南向接口是SDN控制器与数据平面之间的开放接口。SDN控制器通过南向接口对数据平面进行编程控制，实现数据平面的转发等网络行为。当前，最知名的南向接口就是ONF提出的OPenflow协议了。同时ONF还提出OF-CONFIG协议，用于对SDN交换机进行远程配置和管理，其目标都是为了更好地对分散部署的SDN交换机实现集中控制。</p>
+</li>
+<li><p>SDN数据平面包括基于软件实现的和基于硬件实现的数据平面设备。数据平面设备通过南向接口接收来自控制器的指令，并按照这些指令完成特定的网络数据处理。同时SDN数据平面设备也可以通过南向接口给控制器反馈网络配置和运行时的状态信息。SDN交换机是SDN网络中负责具体数据转发处理的设备。和传统网络交换机路由器一样，都是根据数据的某些特征项与表项进行对比，确定相应的处理，与传统设备不同的是，SDN交换机中的表项是由远程控制区统一下发的。因此SDN交换机可以忽略控制逻辑的实现而只专注于表项的数据处理。因为考虑和传统网络混合工作，所以支持混合模式的交换机是设备层技术的一个研发焦点。SDN交换机一个重要的应用场景是虚拟化的环境，所以SDN交换机会有软件硬件两种形态。比如OVS（Openvswitch）就是一个虚拟的开源交换机，在虚拟化组网中产生了巨大的作用。</p>
+</li>
+</ol>
+<hr/>]]></content>
+      <categories>
+        <category>SDN</category>
+      </categories>
+      <tags>
+        <tag>SDN</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>基于内容的个性化推荐系统设计与实现</title>
     <url>/2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/</url>
     <content><![CDATA[<p>因为项目的需要，里面加一个小型的推荐系统的模块，就找了一些资料，实现了基于内容的一个推荐系统。</p>
