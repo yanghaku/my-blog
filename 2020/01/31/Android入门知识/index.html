@@ -130,7 +130,7 @@
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">奋斗才能拥有最美丽的人生</p>
+        <p class="site-subtitle">君子曰:学不可以已</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -158,7 +158,7 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">11</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
@@ -168,7 +168,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">17</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">19</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -285,7 +285,6 @@
 <hr/>
 
 <a id="more"></a>
-
 <h2 id="Android平台架构"><a href="#Android平台架构" class="headerlink" title="Android平台架构"></a>Android平台架构</h2><p>Android 是一个<strong>基于linux内核的开源软件栈</strong>，通过软件叠层的方式构建出来的一个操作系统。</p>
 <p>平台的架构图（来自官网）：<br><img src="android-stack_2x.png" alt="android-stack_2x.png"></p>
 <p>从下到上分为五层： Linux内核层，HAL硬件抽象层，Library层，Framework层，Application应用层。</p>
@@ -325,12 +324,12 @@
 <h2 id="Android-Application-基础知识"><a href="#Android-Application-基础知识" class="headerlink" title="Android Application 基础知识"></a><strong>Android Application 基础知识</strong></h2><p>一个APK文件，包含一个Android应用的所有内容。使用Kotlin，Java，c++编写Android应用，Android SDK会将代码连同数据和资源文件编译成一个APK（Android Package），即带有<code>.apk</code>后缀的归档文件。</p>
 <h3 id="安全沙盒与最小权限原则"><a href="#安全沙盒与最小权限原则" class="headerlink" title="安全沙盒与最小权限原则"></a>安全沙盒与最小权限原则</h3><h4 id="安全沙盒-security-sandbox"><a href="#安全沙盒-security-sandbox" class="headerlink" title="安全沙盒 security sandbox"></a>安全沙盒 security sandbox</h4><blockquote>
 <p>沙箱(盒)是为执行中的程序提供隔离环境的一种安全机制。它通过严格控制执行的程序锁访问的资源，以确保系统的安全。<br>每一个Android应用都处于各自的安全沙盒里面，它们直接不能互相访问文件等。</p>
-</blockquote>
 <ul>
 <li>Android操作系统首先是多用户的Linux系统，对于每一个应用都是一个不同的用户。</li>
 <li>默认情况下，系统会为每一个应用分配一个唯一的用户ID，系统为应用中的所有文件设置权限，使得有权限的用户才能访问对应的文件。</li>
 <li>每个进程都拥有一个独立的虚拟机，默认情况下，每个应用都在其自己对应的Linux进程上执行（应用-虚拟机-Linux进程 这三个是一对一的关系）</li>
 </ul>
+</blockquote>
 <h4 id="最小权限原则"><a href="#最小权限原则" class="headerlink" title="最小权限原则"></a>最小权限原则</h4><p>对于每一个应用，也就是对应的一个唯一的Linux用户，默认情况下只能访问其工作所需要的组件。在此环境中，应用无法访问其未获得权限的系统部分。<br>应用要想访问其他应用的共享数据或者系统服务，有两个途径：</p>
 <ul>
 <li>让两个应用共享一个Linux用户（也就是说两个应用的linux userid相同），这样二者可以互相访问。在节省资源的时候，也可以安排拥有相同用户ID的应用在同一个Linux进程内运行，共享同一个虚拟机。</li>
@@ -356,7 +355,6 @@
 <h5 id="Activity的生命周期"><a href="#Activity的生命周期" class="headerlink" title="Activity的生命周期"></a>Activity的生命周期</h5><p>首先是一个标准的图：<br><img src="2.png" alt=""></p>
 <p>Activity 包括7个生命周期的流程，分别是：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">onCreate(),onStart(),onResume(),onPause(),onStop(),onDestory(),onRestart().</span><br></pre></td></tr></table></figure>
-
 <p>其中 <code>onCreate()</code>是生命周期的开始，<code>onDestory()</code>是生命周期的结束</p>
 <ul>
 <li>Activity启动： <code>onCreate()</code> -&gt; <code>onStart()</code>（此时不可见） -&gt; <code>onResume</code> -&gt; 处于运行态，可见</li>
@@ -416,16 +414,13 @@
 </li>
 <li><p>声明组件的功能<br>这个就是声明了一个执行动作为SEND发送的一个组件</p>
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="tag">&lt;<span class="name">application</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">"com.example.project.ComposeEmailActivity"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.SEND"</span> /&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">data</span> <span class="attr">android:type</span>=<span class="string">"*/*"</span> /&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.DEFAULT"</span> /&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure></li>
-<li><p>声明应用要求</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-feature</span> <span class="attr">android:name</span>=<span class="string">"android.hardware.camera.any"</span></span></span><br><span class="line"><span class="tag">                  <span class="attr">android:required</span>=<span class="string">"true"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-sdk</span> <span class="attr">android:minSdkVersion</span>=<span class="string">"7"</span> <span class="attr">android:targetSdkVersion</span>=<span class="string">"19"</span> /&gt;</span></span><br><span class="line">    ...</span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-
+<li>声明应用要求<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">...</span> &gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-feature</span> <span class="attr">android:name</span>=<span class="string">"android.hardware.camera.any"</span></span></span><br><span class="line"><span class="tag">                  <span class="attr">android:required</span>=<span class="string">"true"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-sdk</span> <span class="attr">android:minSdkVersion</span>=<span class="string">"7"</span> <span class="attr">android:targetSdkVersion</span>=<span class="string">"19"</span> /&gt;</span></span><br><span class="line">    ...</span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure>
 </li>
 </ul>
 <h3 id="应用资源"><a href="#应用资源" class="headerlink" title="应用资源"></a>应用资源</h3><p>Android应用不仅仅是代码，还需要与源代码分离的静态资源，比如图像，音频文件还有xml文件定义的界面动画等。所有的资源都在 /res 的文件夹内。</p>
 <h2 id="Android-SDK-目录结构及作用"><a href="#Android-SDK-目录结构及作用" class="headerlink" title="Android SDK 目录结构及作用"></a>Android SDK 目录结构及作用</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">android-sdk&#x2F;</span><br><span class="line">	add-ones&#x2F;  -&gt; 一些附加的库，第三方公司的附加功能，比如GoogleMaps等</span><br><span class="line">	build-tools&#x2F;  -&gt; 构建项目的时候用到的工具，还包括一些编译工具等</span><br><span class="line">		28.0.3&#x2F;</span><br><span class="line">		29.0.3&#x2F;</span><br><span class="line">	docs&#x2F;		-&gt; 离线的开发者文档（可选）</span><br><span class="line">	platforms&#x2F;	 -&gt; sdk里面最重要的文件，每个文件夹都含有各个版本的sdk</span><br><span class="line">		android-28&#x2F;		-&gt; API级别28的sdk版本</span><br><span class="line">		android-29&#x2F;</span><br><span class="line">	platforms-tool&#x2F;	-&gt; 各版本sdk通用的工具，比如abd.exe,sqlite3.exe等</span><br><span class="line">	skins&#x2F;			-&gt; 安卓模拟器的皮肤</span><br><span class="line">	system-images&#x2F;	-&gt; 创建安卓模拟器的时候使用的系统镜像</span><br><span class="line">		android-28&#x2F;</span><br><span class="line">	tools&#x2F;		-&gt; 通用的Android开发、调试的工具</span><br></pre></td></tr></table></figure>
 <p>还有两个很重要的工具： SDK管理器 和 安卓模拟器管理器。（可以直接用IDE上带的工具来代替）</p>
-<h2 id="开发环境搭建"><a href="#开发环境搭建" class="headerlink" title="开发环境搭建"></a>开发环境搭建</h2><p>操作系统：win10<br>IDE：Android Studio （用起来跟idea一个感觉，非常棒！<del>比VS强太多了</del>）（直接官网下载安装即可）</p>
+<h2 id="开发环境搭建"><a href="#开发环境搭建" class="headerlink" title="开发环境搭建"></a>开发环境搭建</h2><p>操作系统：win10<br>IDE：Android Studio （用起来跟idea一个感觉，非常棒！~比VS强太多了~）（直接官网下载安装即可）</p>
 <p>安装之后主要是设置SDK和模拟器。（我之前用VS下过一个sdk，Android Studio直接识别出来本地的了！）</p>
 <p>设置好之后就新建工程，然后新建一个空白的工程，一路next，IDE会自动生成一个空白项目。<br>项目结构如下：<br><img src="6.png" alt=""></p>
 <p>根目录里的清单文件 <code>AndroidMainifest.xml</code><br>java/  下的java代码（只有一个组件MainActivity）<br>res/  里是应用的各种资源，包括布局，图片等等。<br>res/layout 里的activity_main.xml 就是MainActivity这个Activity对应的布局文件。</p>
@@ -545,7 +540,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-count">19</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -558,7 +553,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

@@ -58,7 +58,7 @@
 <meta property="og:image" content="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/architecture1.png">
 <meta property="og:image" content="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/1.png">
 <meta property="article:published_time" content="2020-02-02T01:25:00.000Z">
-<meta property="article:modified_time" content="2020-02-02T07:17:10.255Z">
+<meta property="article:modified_time" content="2020-02-02T07:20:24.256Z">
 <meta property="article:author" content="杨博">
 <meta property="article:tag" content="Android">
 <meta property="article:tag" content=".NET">
@@ -127,7 +127,7 @@
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">奋斗才能拥有最美丽的人生</p>
+        <p class="site-subtitle">君子曰:学不可以已</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -155,7 +155,7 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">11</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
@@ -165,7 +165,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">17</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">19</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -247,7 +247,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2020-02-02 09:25:00 / 修改时间：15:17:10" itemprop="dateCreated datePublished" datetime="2020-02-02T09:25:00+08:00">2020-02-02</time>
+              <time title="创建时间：2020-02-02 09:25:00 / 修改时间：15:20:24" itemprop="dateCreated datePublished" datetime="2020-02-02T09:25:00+08:00">2020-02-02</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -278,7 +278,6 @@
 <p>对于其他语言做的应用在Android平台运行，像c/c++这种静态编译的语言，可以直接编译成二进制码，通过JNI（java本地接口）与java通信（调用操作系统的API），直接运行在Library层即可（因为这一层是c/c++实现的，所以这一层也提供了原生c/c++的API供调用）。</p>
 <p>而Xamarin是用C#开发的语言，C#和java一样，也是即时编译（JIT）语言，编译成中间语言（IL）之后需要在 .NET虚拟机上运行（在移动端是Mono虚拟机）。Android操作系统本身就没有C#的运行环境，而C#不能直接编译成二进制机器码，所以要融入Android，还需要在每个应用里带着 .NET运行时（Mono虚拟机）。这样C#才能在Android系统里运行。</p>
 <a id="more"></a>
-
 <p>其实Android本身就是软件叠层的方式构建的操作系统，Android上没有支持C#运行的环境，应用安装的时候自己带上就好了。（就举个简单的栗子：windows本身不带着JRE，而用Java语言写的程序在windows上需要JRE来运行，那么我开发Java应用的时候直接在应用里打包一个给自己专门用的JRE，不就支持所有的Windows操作系统了~ ）</p>
 <p>这只是简单来说，其实具体还得解决开发的时候操作系统的API调用等等各种问题。</p>
 <h2 id="体系结构"><a href="#体系结构" class="headerlink" title="体系结构"></a>体系结构</h2><p>先放一个官网文档里的架构图：<br><img src="architecture1.png" alt="architecture1.png"></p>
@@ -300,7 +299,7 @@
 <p>其他的就跟普通的应用程序包差不多了，比如根目录的清单文件，res资源文件夹等。</p>
 <hr/>
 
-<p>总之一句话：<br><strong>The APK is still a valid Java APK. It Starts in ART,and uses ART for UI(Android.*classes). Mono is used to run .NET IL. The IL and Android native code run side-by-side and communicate via callable wrappers.</strong> (github的一条issue里面的，总结的很到位，<del>我翻译不了只能放英文了</del>)。</p>
+<p>总之一句话：<br><strong>The APK is still a valid Java APK. It Starts in ART,and uses ART for UI(Android.*classes). Mono is used to run .NET IL. The IL and Android native code run side-by-side and communicate via callable wrappers.</strong> (github的一条issue里面的，总结的很到位，~我翻译不了只能放英文了~)。</p>
 <hr/>
 
 <h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
@@ -412,7 +411,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-count">19</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -425,7 +424,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

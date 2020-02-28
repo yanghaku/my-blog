@@ -58,7 +58,7 @@
 <meta property="og:image" content="https://yanghaku.github.io/2020/02/19/SDN%E5%AE%9E%E9%AA%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/1.png">
 <meta property="og:image" content="https://yanghaku.github.io/2020/02/19/SDN%E5%AE%9E%E9%AA%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/2.png">
 <meta property="article:published_time" content="2020-02-19T13:20:00.000Z">
-<meta property="article:modified_time" content="2020-02-20T06:36:34.725Z">
+<meta property="article:modified_time" content="2020-02-22T06:02:43.461Z">
 <meta property="article:author" content="杨博">
 <meta property="article:tag" content="SDN">
 <meta name="twitter:card" content="summary">
@@ -125,7 +125,7 @@
         <span class="logo-line-after"><i></i></span>
       </a>
     </div>
-        <p class="site-subtitle">奋斗才能拥有最美丽的人生</p>
+        <p class="site-subtitle">君子曰:学不可以已</p>
   </div>
 
   <div class="site-nav-toggle">
@@ -153,7 +153,7 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">11</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
@@ -163,7 +163,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">17</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">19</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -251,7 +251,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-02-20 14:36:34" itemprop="dateModified" datetime="2020-02-20T14:36:34+08:00">2020-02-20</time>
+                <time title="修改时间：2020-02-22 14:02:43" itemprop="dateModified" datetime="2020-02-22T14:02:43+08:00">2020-02-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -303,7 +303,9 @@
 <p>配置数据库：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo mkdir -p /usr/<span class="built_in">local</span>/etc/openvswitch</span><br><span class="line">sudo ovsdb-tool create /usr/<span class="built_in">local</span>/etc/openvswitch/conf.db /usr/share/openvswitch/vswitch.ovsschema</span><br></pre></td></tr></table></figure></p>
 <p>初始化数据库：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ovs-vsctl --no-wait init</span><br></pre></td></tr></table></figure></p>
 <p>最后查看安装状态：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">yb@ubuntu:/var/run/openvswitch$ sudo ovs-vsctl show</span><br><span class="line">0e0bf153-77d4-43ff-9795-5085d959712e</span><br><span class="line">    ovs_version: <span class="string">"2.12.0"</span></span><br><span class="line">yb@ubuntu:/var/run/openvswitch$</span><br></pre></td></tr></table></figure></p>
-<h2 id="安装Ryu"><a href="#安装Ryu" class="headerlink" title="安装Ryu"></a>安装Ryu</h2><h3 id="安装之前"><a href="#安装之前" class="headerlink" title="安装之前"></a>安装之前</h3><p>安装之前需要注意pip下载的包的位置的问题：<br>pip下载的时候会保存到用户的 <code>~/.local/lib/python2.7/site-packets</code>，而当用sudo 运行的时候，包的位置没有包含这个位置，所以就会报错。<br>可以用python -m site看到：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">yb@ubuntu:~/Downloads$ python -m site</span><br><span class="line">sys.path = [</span><br><span class="line">    <span class="string">'/home/yb/Downloads'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/plat-x86_64-linux-gnu'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-tk'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-old'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-dynload'</span>,</span><br><span class="line">    <span class="string">'/home/yb/.local/lib/python2.7/site-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/local/lib/python2.7/dist-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/dist-packages'</span>,</span><br><span class="line">]</span><br><span class="line">USER_BASE: <span class="string">'/home/yb/.local'</span> (exists)</span><br><span class="line">USER_SITE: <span class="string">'/home/yb/.local/lib/python2.7/site-packages'</span> (exists)</span><br><span class="line">ENABLE_USER_SITE: True</span><br><span class="line">yb@ubuntu:~/Downloads$ sudo python -m site</span><br><span class="line">sys.path = [</span><br><span class="line">    <span class="string">'/home/yb/Downloads'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/plat-x86_64-linux-gnu'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-tk'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-old'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-dynload'</span>,</span><br><span class="line">    <span class="string">'/usr/local/lib/python2.7/dist-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/dist-packages'</span>,</span><br><span class="line">]</span><br><span class="line">USER_BASE: <span class="string">'/root/.local'</span> (doesn<span class="string">'t exist)</span></span><br><span class="line"><span class="string">USER_SITE: '</span>/root/.<span class="built_in">local</span>/lib/python2.7/site-packages<span class="string">' (doesn'</span>t exist)</span><br><span class="line">ENABLE_USER_SITE: True</span><br><span class="line">```	</span><br><span class="line">可见两者差别。</span><br><span class="line"></span><br><span class="line">所以要在安装任何python包之前，将这个用户自己的包位置关掉，就不会出现这个问题了！</span><br><span class="line">```sudo vim /usr/lib/python2.7/site.py</span><br></pre></td></tr></table></figure><br>将ENABLE_USER_SITE的值改为False，即<code>NABLE_USER_SITE = False</code>.</p>
+<h2 id="安装Ryu"><a href="#安装Ryu" class="headerlink" title="安装Ryu"></a>安装Ryu</h2><h3 id="安装之前"><a href="#安装之前" class="headerlink" title="安装之前"></a>安装之前</h3><p>安装之前需要注意pip下载的包的位置的问题：<br>pip下载的时候会保存到用户的 <code>~/.local/lib/python2.7/site-packets</code>，而当用sudo 运行的时候，包的位置没有包含这个位置，所以就会报错。<br>可以用python -m site看到：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">yb@ubuntu:~/Downloads$ python -m site</span><br><span class="line">sys.path = [</span><br><span class="line">    <span class="string">'/home/yb/Downloads'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/plat-x86_64-linux-gnu'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-tk'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-old'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-dynload'</span>,</span><br><span class="line">    <span class="string">'/home/yb/.local/lib/python2.7/site-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/local/lib/python2.7/dist-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/dist-packages'</span>,</span><br><span class="line">]</span><br><span class="line">USER_BASE: <span class="string">'/home/yb/.local'</span> (exists)</span><br><span class="line">USER_SITE: <span class="string">'/home/yb/.local/lib/python2.7/site-packages'</span> (exists)</span><br><span class="line">ENABLE_USER_SITE: True</span><br><span class="line">yb@ubuntu:~/Downloads$ sudo python -m site</span><br><span class="line">sys.path = [</span><br><span class="line">    <span class="string">'/home/yb/Downloads'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/plat-x86_64-linux-gnu'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-tk'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-old'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/lib-dynload'</span>,</span><br><span class="line">    <span class="string">'/usr/local/lib/python2.7/dist-packages'</span>,</span><br><span class="line">    <span class="string">'/usr/lib/python2.7/dist-packages'</span>,</span><br><span class="line">]</span><br><span class="line">USER_BASE: <span class="string">'/root/.local'</span> (doesn<span class="string">'t exist)</span></span><br><span class="line"><span class="string">USER_SITE: '</span>/root/.<span class="built_in">local</span>/lib/python2.7/site-packages<span class="string">' (doesn'</span>t exist)</span><br><span class="line">ENABLE_USER_SITE: True</span><br><span class="line"></span><br><span class="line">```	</span><br><span class="line">可见两者差别。</span><br><span class="line"></span><br><span class="line">所以要在安装任何python包之前，将这个用户自己的包位置关掉，就不会出现这个问题了！</span><br><span class="line">```bash</span><br><span class="line">sudo vim /usr/lib/python2.7/site.py</span><br></pre></td></tr></table></figure>
+<p>将ENABLE_USER_SITE的值改为False，即<code>NABLE_USER_SITE = False</code>.</p>
 <hr/>
 
 <p>修改后就可以安装了，这里选择从github上面获取<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/osrg/ryu.git</span><br><span class="line"><span class="built_in">cd</span> ryu</span><br><span class="line">pip install -r tools/pip-requires   <span class="comment">#安装依赖</span></span><br><span class="line">sudo python setup.py install</span><br></pre></td></tr></table></figure><br>装完之后可以输入命令<code>ryu-manager</code>查看是否安装成功</p>
@@ -446,7 +448,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-count">19</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -459,7 +461,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-count">11</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
