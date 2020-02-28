@@ -151,7 +151,7 @@
 <li>try{}catch(){}finally{}</li>
 </ul>
 <p>空语句： 只含分号 ;</p>
-<p><hr/></p>
+<h2 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h2><h2 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h2><p><hr/></p>
 <h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
 <li><a href="https://www.runoob.com/csharp/csharp-tutorial.html" target="_blank">C#菜鸟教程</a></li>
 <li><a href="https://docs.microsoft.com/zh-cn/dotnet/csharp/index" target="_blank">C#文档</a></li>
