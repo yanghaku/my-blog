@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
   <link rel="mask-icon" href="/images/logo.svg" color="#222">
 
-<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="css/main.css">
 
 <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
 <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/font-awesome@4/css/font-awesome.min.css">
@@ -21,7 +21,7 @@
 <script id="hexo-configurations">
   var NexT = window.NexT || {};
   var CONFIG = {
-    hostname: new URL('https://yanghaku.github.io').hostname,
+    hostname: new URL('https:/http://39.96.80.208').hostname,
     root: '/',
     scheme: 'Gemini',
     version: '7.7.0',
@@ -51,7 +51,7 @@
   <meta name="description" content="因为项目的需要，里面加一个小型的推荐系统的模块，就找了一些资料，实现了基于内容的一个推荐系统。 原理基于内容相似度的推荐：就是把与你喜欢看的文章内容相似的文章推荐给你。 优势：无冷启动的问题，只要用户产生了初始的历史数据，就可以开始进行推荐计算。而且随着用户的浏览记录数据的增加，这种推荐一般也会越来越准确。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基于内容的个性化推荐系统设计与实现">
-<meta property="og:url" content="https://yanghaku.github.io/2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:url" content="2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/index.html">
 <meta property="og:site_name" content="YangBo">
 <meta property="og:description" content="因为项目的需要，里面加一个小型的推荐系统的模块，就找了一些资料，实现了基于内容的一个推荐系统。 原理基于内容相似度的推荐：就是把与你喜欢看的文章内容相似的文章推荐给你。 优势：无冷启动的问题，只要用户产生了初始的历史数据，就可以开始进行推荐计算。而且随着用户的浏览记录数据的增加，这种推荐一般也会越来越准确。">
 <meta property="og:locale" content="zh_CN">
@@ -62,7 +62,7 @@
 <meta property="article:tag" content="TFIDF">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://yanghaku.github.io/2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/">
+<link rel="canonical" href="2020/02/12/基于内容的个性化推荐系统/">
 
 
 <script id="page-configurations">
@@ -105,7 +105,7 @@
   </style>
 </noscript>
 
-<link rel="alternate" href="/atom.xml" title="YangBo" type="application/atom+xml">
+<link rel="alternate" href="atom.xml" title="YangBo" type="application/atom+xml">
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage">
@@ -161,7 +161,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">19</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">20</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -219,7 +219,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://yanghaku.github.io/2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/">
+    <link itemprop="mainEntityOfPage" href="2020/02/12/基于内容的个性化推荐系统/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/head.jpg">
@@ -334,8 +334,8 @@ Similarity(A,B) = \frac{\sum_{i\in A\cap B} TFIDF_A[i] * TFIDF_B[i] }{ \sqrt{\su
       <footer class="post-footer">
           
           <div class="post-tags">
-              <a href="/tags/Spring/" rel="tag"><i class="fa fa-tag"></i> Spring</a>
-              <a href="/tags/TFIDF/" rel="tag"><i class="fa fa-tag"></i> TFIDF</a>
+              <a href="tags/Spring/" rel="tag"><i class="fa fa-tag"></i> Spring</a>
+              <a href="tags/TFIDF/" rel="tag"><i class="fa fa-tag"></i> TFIDF</a>
           </div>
 
         
@@ -344,11 +344,11 @@ Similarity(A,B) = \frac{\sum_{i\in A\cap B} TFIDF_A[i] * TFIDF_B[i] }{ \sqrt{\su
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2020/02/07/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B02%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E4%B8%8E%E9%80%89%E6%8B%A9/" rel="prev" title="机器学习入门-西瓜书学习笔记（2）模型评估与选择">
+    <a href="2020/02/07/周志华机器学习笔记2模型评估与选择/" rel="prev" title="机器学习入门-西瓜书学习笔记（2）模型评估与选择">
       <i class="fa fa-chevron-left"></i> 机器学习入门-西瓜书学习笔记（2）模型评估与选择
     </a></div>
       <div class="post-nav-item">
-    <a href="/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B01--SDN%E4%BB%8B%E7%BB%8D/" rel="next" title="SDN架构与实现1--SDN介绍">
+    <a href="2020/02/17/SDN架构与实现1--SDN介绍/" rel="next" title="SDN架构与实现1--SDN介绍">
       SDN架构与实现1--SDN介绍 <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
@@ -427,7 +427,7 @@ Similarity(A,B) = \frac{\sum_{i\in A\cap B} TFIDF_A[i] * TFIDF_B[i] }{ \sqrt{\su
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">19</span>
+          <span class="site-state-item-count">20</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -501,17 +501,17 @@ Similarity(A,B) = \frac{\sum_{i\in A\cap B} TFIDF_A[i] * TFIDF_B[i] }{ \sqrt{\su
   <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/velocity-animate@1/velocity.ui.min.js"></script>
 
-<script src="/js/utils.js"></script>
+<script src="js/utils.js"></script>
 
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/pisces.js"></script>
+<script src="js/motion.js"></script>
 
 
-<script src="/js/next-boot.js"></script>
+<script src="js/schemes/pisces.js"></script>
 
-<script src="/js/bookmark.js"></script>
+
+<script src="js/next-boot.js"></script>
+
+<script src="js/bookmark.js"></script>
 
 
   <script defer src="//cdn.jsdelivr.net/gh/theme-next/theme-next-three@1/three.min.js"></script>
@@ -523,7 +523,7 @@ Similarity(A,B) = \frac{\sum_{i\in A\cap B} TFIDF_A[i] * TFIDF_B[i] }{ \sqrt{\su
 
 
   
-<script src="/js/local-search.js"></script>
+<script src="js/local-search.js"></script>
 
 
 
@@ -604,7 +604,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo: 'yanghaku.github.io',
       owner: 'yanghaku',
       admin: ['yanghaku'],
-      id: 'e655f9875fb4428fc43b362ad3ea1390',
+      id: '617c2c2526418fa65c331fb3f1f21b30',
         language: 'zh-CN',
       distractionFreeMode: true
     });

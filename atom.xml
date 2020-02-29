@@ -5,9 +5,9 @@
   <subtitle>君子曰:学不可以已</subtitle>
   <link href="/atom.xml" rel="self"/>
   
-  <link href="https://yanghaku.github.io/"/>
-  <updated>2020-02-28T16:14:36.016Z</updated>
-  <id>https://yanghaku.github.io/</id>
+  <link href="https://http//39.96.80.208/"/>
+  <updated>2020-02-27T07:57:19.887Z</updated>
+  <id>https://http//39.96.80.208/</id>
   
   <author>
     <name>杨博</name>
@@ -17,9 +17,35 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>C# 高级特征</title>
+    <link href="2020/02/27/cs%E9%AB%98%E7%BA%A7%E7%89%B9%E5%BE%81/"/>
+    <id>2020/02/27/cs%E9%AB%98%E7%BA%A7%E7%89%B9%E5%BE%81/</id>
+    <published>2020-02-27T06:00:00.000Z</published>
+    <updated>2020-02-27T07:57:19.887Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="委托（Delegate）"><a href="#委托（Delegate）" class="headerlink" title="委托（Delegate）"></a>委托（Delegate）</h2><h2 id="匿名（Anonymous）"><a href="#匿名（Anonymous）" class="headerlink" title="匿名（Anonymous）"></a>匿名（Anonymous）</h2><h2 id="事件（Event）"><a href="#事件（Event）" class="headerlink" title="事件（Event）"></a>事件（Event）</h2><h2 id="Lambda"><a href="#Lambda" class="headerlink" title="Lambda"></a>Lambda</h2><h2 id="Extension"><a href="#Extension" class="headerlink" title="Extension"></a>Extension</h2><h2 id="Thread"><a href="#Thread" class="headerlink" title="Thread"></a>Thread</h2><h2 id="Interface"><a href="#Interface" class="headerlink" title="Interface"></a>Interface</h2><h2 id="Reflection"><a href="#Reflection" class="headerlink" title="Reflection"></a>Reflection</h2><h2 id="Socket"><a href="#Socket" class="headerlink" title="Socket"></a>Socket</h2>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;委托（Delegate）&quot;&gt;&lt;a href=&quot;#委托（Delegate）&quot; class=&quot;headerlink&quot; title=&quot;委托（Delegate）&quot;&gt;&lt;/a&gt;委托（Delegate）&lt;/h2&gt;&lt;h2 id=&quot;匿名（Anonymous）&quot;&gt;&lt;a href=&quot;#
+      
+    
+    </summary>
+    
+    
+      <category term=".NET学习" scheme="https:/http://39.96.80.208/categories/NET%E5%AD%A6%E4%B9%A0/"/>
+    
+    
+      <category term=".NET" scheme="https:/http://39.96.80.208/tags/NET/"/>
+    
+  </entry>
+  
+  <entry>
     <title>C# 语言基础</title>
-    <link href="https://yanghaku.github.io/2020/02/26/cs%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/"/>
-    <id>https://yanghaku.github.io/2020/02/26/cs%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/</id>
+    <link href="2020/02/26/cs%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/"/>
+    <id>2020/02/26/cs%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/</id>
     <published>2020-02-26T04:39:00.000Z</published>
     <updated>2020-02-28T16:14:36.016Z</updated>
     
@@ -32,17 +58,17 @@
     </summary>
     
     
-      <category term=".NET学习" scheme="https://yanghaku.github.io/categories/NET%E5%AD%A6%E4%B9%A0/"/>
+      <category term=".NET学习" scheme="https:/http://39.96.80.208/categories/NET%E5%AD%A6%E4%B9%A0/"/>
     
     
-      <category term=".NET" scheme="https://yanghaku.github.io/tags/NET/"/>
+      <category term=".NET" scheme="https:/http://39.96.80.208/tags/NET/"/>
     
   </entry>
   
   <entry>
     <title>.NET Framework 与 CLR 概述</title>
-    <link href="https://yanghaku.github.io/2020/02/25/NET%20Framework%E6%A6%82%E8%BF%B0/"/>
-    <id>https://yanghaku.github.io/2020/02/25/NET%20Framework%E6%A6%82%E8%BF%B0/</id>
+    <link href="2020/02/25/NET%20Framework%E6%A6%82%E8%BF%B0/"/>
+    <id>2020/02/25/NET%20Framework%E6%A6%82%E8%BF%B0/</id>
     <published>2020-02-25T09:39:00.000Z</published>
     <updated>2020-02-26T10:28:18.182Z</updated>
     
@@ -55,19 +81,19 @@
     </summary>
     
     
-      <category term=".NET学习" scheme="https://yanghaku.github.io/categories/NET%E5%AD%A6%E4%B9%A0/"/>
+      <category term=".NET学习" scheme="https:/http://39.96.80.208/categories/NET%E5%AD%A6%E4%B9%A0/"/>
     
     
-      <category term=".NET" scheme="https://yanghaku.github.io/tags/NET/"/>
+      <category term=".NET" scheme="https:/http://39.96.80.208/tags/NET/"/>
     
-      <category term=".NET Framework" scheme="https://yanghaku.github.io/tags/NET-Framework/"/>
+      <category term=".NET Framework" scheme="https:/http://39.96.80.208/tags/NET-Framework/"/>
     
   </entry>
   
   <entry>
     <title>SDN中简单模拟DDOS检测与防御</title>
-    <link href="https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/"/>
-    <id>https://yanghaku.github.io/2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/</id>
+    <link href="2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/"/>
+    <id>2020/02/21/sflowmininet%E7%AE%80%E5%8D%95%E6%A8%A1%E6%8B%9Fddos/</id>
     <published>2020-02-21T03:20:00.000Z</published>
     <updated>2020-02-21T12:40:42.446Z</updated>
     
@@ -81,17 +107,17 @@
     </summary>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/categories/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/categories/SDN/"/>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/tags/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/tags/SDN/"/>
     
   </entry>
   
   <entry>
     <title>SDN实验环境搭建</title>
-    <link href="https://yanghaku.github.io/2020/02/19/SDN%E5%AE%9E%E9%AA%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/"/>
-    <id>https://yanghaku.github.io/2020/02/19/SDN%E5%AE%9E%E9%AA%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</id>
+    <link href="2020/02/19/SDN%E5%AE%9E%E9%AA%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/"/>
+    <id>2020/02/19/SDN%E5%AE%9E%E9%AA%8C%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</id>
     <published>2020-02-19T13:20:00.000Z</published>
     <updated>2020-02-22T06:02:43.461Z</updated>
     
@@ -107,17 +133,17 @@
     </summary>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/categories/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/categories/SDN/"/>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/tags/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/tags/SDN/"/>
     
   </entry>
   
   <entry>
     <title>SDN架构与实现4--SDN控制平面与控制器</title>
-    <link href="https://yanghaku.github.io/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B04-SDN%E6%8E%A7%E5%88%B6%E5%B9%B3%E9%9D%A2%E4%B8%8E%E6%8E%A7%E5%88%B6%E5%99%A8/"/>
-    <id>https://yanghaku.github.io/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B04-SDN%E6%8E%A7%E5%88%B6%E5%B9%B3%E9%9D%A2%E4%B8%8E%E6%8E%A7%E5%88%B6%E5%99%A8/</id>
+    <link href="2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B04-SDN%E6%8E%A7%E5%88%B6%E5%B9%B3%E9%9D%A2%E4%B8%8E%E6%8E%A7%E5%88%B6%E5%99%A8/"/>
+    <id>2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B04-SDN%E6%8E%A7%E5%88%B6%E5%B9%B3%E9%9D%A2%E4%B8%8E%E6%8E%A7%E5%88%B6%E5%99%A8/</id>
     <published>2020-02-19T12:25:00.000Z</published>
     <updated>2020-02-19T08:53:23.371Z</updated>
     
@@ -130,17 +156,17 @@
     </summary>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/categories/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/categories/SDN/"/>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/tags/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/tags/SDN/"/>
     
   </entry>
   
   <entry>
     <title>SDN架构与实现3--SDN数据平面与交换机</title>
-    <link href="https://yanghaku.github.io/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/"/>
-    <id>https://yanghaku.github.io/2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/</id>
+    <link href="2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/"/>
+    <id>2020/02/19/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B03--SDN%E6%95%B0%E6%8D%AE%E5%B9%B3%E9%9D%A2%E4%B8%8E%E4%BA%A4%E6%8D%A2%E6%9C%BA/</id>
     <published>2020-02-19T10:25:00.000Z</published>
     <updated>2020-02-19T06:32:39.786Z</updated>
     
@@ -153,17 +179,17 @@
     </summary>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/categories/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/categories/SDN/"/>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/tags/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/tags/SDN/"/>
     
   </entry>
   
   <entry>
     <title>SDN架构与实现2--SDN南向协议</title>
-    <link href="https://yanghaku.github.io/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/"/>
-    <id>https://yanghaku.github.io/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/</id>
+    <link href="2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/"/>
+    <id>2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B02--SDN%E5%8D%97%E5%90%91%E5%8D%8F%E8%AE%AE/</id>
     <published>2020-02-17T09:25:00.000Z</published>
     <updated>2020-02-19T03:11:53.601Z</updated>
     
@@ -181,17 +207,17 @@
     </summary>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/categories/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/categories/SDN/"/>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/tags/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/tags/SDN/"/>
     
   </entry>
   
   <entry>
     <title>SDN架构与实现1--SDN介绍</title>
-    <link href="https://yanghaku.github.io/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B01--SDN%E4%BB%8B%E7%BB%8D/"/>
-    <id>https://yanghaku.github.io/2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B01--SDN%E4%BB%8B%E7%BB%8D/</id>
+    <link href="2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B01--SDN%E4%BB%8B%E7%BB%8D/"/>
+    <id>2020/02/17/SDN%E6%9E%B6%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B01--SDN%E4%BB%8B%E7%BB%8D/</id>
     <published>2020-02-17T06:27:00.000Z</published>
     <updated>2020-02-17T09:07:13.216Z</updated>
     
@@ -204,17 +230,17 @@
     </summary>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/categories/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/categories/SDN/"/>
     
     
-      <category term="SDN" scheme="https://yanghaku.github.io/tags/SDN/"/>
+      <category term="SDN" scheme="https:/http://39.96.80.208/tags/SDN/"/>
     
   </entry>
   
   <entry>
     <title>基于内容的个性化推荐系统设计与实现</title>
-    <link href="https://yanghaku.github.io/2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/"/>
-    <id>https://yanghaku.github.io/2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/</id>
+    <link href="2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/"/>
+    <id>2020/02/12/%E5%9F%BA%E4%BA%8E%E5%86%85%E5%AE%B9%E7%9A%84%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/</id>
     <published>2020-02-12T03:22:00.000Z</published>
     <updated>2020-02-13T08:03:12.578Z</updated>
     
@@ -230,16 +256,16 @@
     
     
     
-      <category term="Spring" scheme="https://yanghaku.github.io/tags/Spring/"/>
+      <category term="Spring" scheme="https:/http://39.96.80.208/tags/Spring/"/>
     
-      <category term="TFIDF" scheme="https://yanghaku.github.io/tags/TFIDF/"/>
+      <category term="TFIDF" scheme="https:/http://39.96.80.208/tags/TFIDF/"/>
     
   </entry>
   
   <entry>
     <title>机器学习入门-西瓜书学习笔记（2）模型评估与选择</title>
-    <link href="https://yanghaku.github.io/2020/02/07/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B02%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E4%B8%8E%E9%80%89%E6%8B%A9/"/>
-    <id>https://yanghaku.github.io/2020/02/07/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B02%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E4%B8%8E%E9%80%89%E6%8B%A9/</id>
+    <link href="2020/02/07/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B02%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E4%B8%8E%E9%80%89%E6%8B%A9/"/>
+    <id>2020/02/07/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B02%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E4%B8%8E%E9%80%89%E6%8B%A9/</id>
     <published>2020-02-07T12:14:00.000Z</published>
     <updated>2020-02-12T03:42:12.389Z</updated>
     
@@ -255,17 +281,17 @@
     </summary>
     
     
-      <category term="机器学习" scheme="https://yanghaku.github.io/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
+      <category term="机器学习" scheme="https:/http://39.96.80.208/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
     
     
-      <category term="机器学习" scheme="https://yanghaku.github.io/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
+      <category term="机器学习" scheme="https:/http://39.96.80.208/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
     
   </entry>
   
   <entry>
     <title>机器学习入门-西瓜书学习笔记（1）绪论</title>
-    <link href="https://yanghaku.github.io/2020/02/03/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B01%E7%BB%AA%E8%AE%BA/"/>
-    <id>https://yanghaku.github.io/2020/02/03/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B01%E7%BB%AA%E8%AE%BA/</id>
+    <link href="2020/02/03/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B01%E7%BB%AA%E8%AE%BA/"/>
+    <id>2020/02/03/%E5%91%A8%E5%BF%97%E5%8D%8E%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B01%E7%BB%AA%E8%AE%BA/</id>
     <published>2020-02-03T05:19:00.000Z</published>
     <updated>2020-02-04T13:14:33.539Z</updated>
     
@@ -279,17 +305,17 @@
     </summary>
     
     
-      <category term="机器学习" scheme="https://yanghaku.github.io/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
+      <category term="机器学习" scheme="https:/http://39.96.80.208/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
     
     
-      <category term="机器学习" scheme="https://yanghaku.github.io/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
+      <category term="机器学习" scheme="https:/http://39.96.80.208/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/"/>
     
   </entry>
   
   <entry>
     <title>Xamarin.Android 运行原理</title>
-    <link href="https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/"/>
-    <id>https://yanghaku.github.io/2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/</id>
+    <link href="2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/"/>
+    <id>2020/02/02/Xamarin.Android%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86/</id>
     <published>2020-02-02T01:25:00.000Z</published>
     <updated>2020-02-02T07:20:24.256Z</updated>
     
@@ -306,21 +332,21 @@
     </summary>
     
     
-      <category term=".NET学习" scheme="https://yanghaku.github.io/categories/NET%E5%AD%A6%E4%B9%A0/"/>
+      <category term=".NET学习" scheme="https:/http://39.96.80.208/categories/NET%E5%AD%A6%E4%B9%A0/"/>
     
     
-      <category term="Android" scheme="https://yanghaku.github.io/tags/Android/"/>
+      <category term=".NET" scheme="https:/http://39.96.80.208/tags/NET/"/>
     
-      <category term=".NET" scheme="https://yanghaku.github.io/tags/NET/"/>
+      <category term="Android" scheme="https:/http://39.96.80.208/tags/Android/"/>
     
-      <category term="Xamarin" scheme="https://yanghaku.github.io/tags/Xamarin/"/>
+      <category term="Xamarin" scheme="https:/http://39.96.80.208/tags/Xamarin/"/>
     
   </entry>
   
   <entry>
     <title>Android入门知识</title>
-    <link href="https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/"/>
-    <id>https://yanghaku.github.io/2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/</id>
+    <link href="2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/"/>
+    <id>2020/01/31/Android%E5%85%A5%E9%97%A8%E7%9F%A5%E8%AF%86/</id>
     <published>2020-01-31T03:19:00.000Z</published>
     <updated>2020-02-01T07:33:43.067Z</updated>
     
@@ -334,17 +360,17 @@
     </summary>
     
     
-      <category term="Android学习" scheme="https://yanghaku.github.io/categories/Android%E5%AD%A6%E4%B9%A0/"/>
+      <category term="Android学习" scheme="https:/http://39.96.80.208/categories/Android%E5%AD%A6%E4%B9%A0/"/>
     
     
-      <category term="Android" scheme="https://yanghaku.github.io/tags/Android/"/>
+      <category term="Android" scheme="https:/http://39.96.80.208/tags/Android/"/>
     
   </entry>
   
   <entry>
     <title>Xamarin学习1 -- 概念篇</title>
-    <link href="https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/"/>
-    <id>https://yanghaku.github.io/2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/</id>
+    <link href="2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/"/>
+    <id>2020/01/30/Xamarin%E5%AD%A6%E4%B9%A01%E6%A6%82%E5%BF%B5%E7%AF%87/</id>
     <published>2020-01-30T08:46:00.000Z</published>
     <updated>2020-02-01T08:32:05.914Z</updated>
     
@@ -357,23 +383,23 @@
     </summary>
     
     
-      <category term=".NET学习" scheme="https://yanghaku.github.io/categories/NET%E5%AD%A6%E4%B9%A0/"/>
+      <category term=".NET学习" scheme="https:/http://39.96.80.208/categories/NET%E5%AD%A6%E4%B9%A0/"/>
     
     
-      <category term="Android" scheme="https://yanghaku.github.io/tags/Android/"/>
+      <category term=".NET" scheme="https:/http://39.96.80.208/tags/NET/"/>
     
-      <category term=".NET" scheme="https://yanghaku.github.io/tags/NET/"/>
+      <category term="Android" scheme="https:/http://39.96.80.208/tags/Android/"/>
     
-      <category term="Xamarin" scheme="https://yanghaku.github.io/tags/Xamarin/"/>
+      <category term="Xamarin" scheme="https:/http://39.96.80.208/tags/Xamarin/"/>
     
-      <category term="iOS" scheme="https://yanghaku.github.io/tags/iOS/"/>
+      <category term="iOS" scheme="https:/http://39.96.80.208/tags/iOS/"/>
     
   </entry>
   
   <entry>
     <title>.NET初学概览</title>
-    <link href="https://yanghaku.github.io/2020/01/29/NET%E6%A6%82%E8%A7%88/"/>
-    <id>https://yanghaku.github.io/2020/01/29/NET%E6%A6%82%E8%A7%88/</id>
+    <link href="2020/01/29/NET%E6%A6%82%E8%A7%88/"/>
+    <id>2020/01/29/NET%E6%A6%82%E8%A7%88/</id>
     <published>2020-01-29T08:46:00.000Z</published>
     <updated>2020-02-25T09:39:00.828Z</updated>
     
@@ -389,23 +415,23 @@
     </summary>
     
     
-      <category term=".NET学习" scheme="https://yanghaku.github.io/categories/NET%E5%AD%A6%E4%B9%A0/"/>
+      <category term=".NET学习" scheme="https:/http://39.96.80.208/categories/NET%E5%AD%A6%E4%B9%A0/"/>
     
     
-      <category term=".NET" scheme="https://yanghaku.github.io/tags/NET/"/>
+      <category term=".NET" scheme="https:/http://39.96.80.208/tags/NET/"/>
     
-      <category term=".NET Core" scheme="https://yanghaku.github.io/tags/NET-Core/"/>
+      <category term=".NET Framework" scheme="https:/http://39.96.80.208/tags/NET-Framework/"/>
     
-      <category term=".NET Framework" scheme="https://yanghaku.github.io/tags/NET-Framework/"/>
+      <category term="Xamarin" scheme="https:/http://39.96.80.208/tags/Xamarin/"/>
     
-      <category term="Xamarin" scheme="https://yanghaku.github.io/tags/Xamarin/"/>
+      <category term=".NET Core" scheme="https:/http://39.96.80.208/tags/NET-Core/"/>
     
   </entry>
   
   <entry>
     <title>失踪半年人口回归</title>
-    <link href="https://yanghaku.github.io/2020/01/29/%E5%A4%B1%E8%B8%AA%E5%8D%8A%E5%B9%B4%E4%BA%BA%E5%8F%A3%E5%9B%9E%E5%BD%92/"/>
-    <id>https://yanghaku.github.io/2020/01/29/%E5%A4%B1%E8%B8%AA%E5%8D%8A%E5%B9%B4%E4%BA%BA%E5%8F%A3%E5%9B%9E%E5%BD%92/</id>
+    <link href="2020/01/29/%E5%A4%B1%E8%B8%AA%E5%8D%8A%E5%B9%B4%E4%BA%BA%E5%8F%A3%E5%9B%9E%E5%BD%92/"/>
+    <id>2020/01/29/%E5%A4%B1%E8%B8%AA%E5%8D%8A%E5%B9%B4%E4%BA%BA%E5%8F%A3%E5%9B%9E%E5%BD%92/</id>
     <published>2020-01-29T03:00:00.000Z</published>
     <updated>2020-01-29T13:29:00.195Z</updated>
     
@@ -420,15 +446,15 @@
     </summary>
     
     
-      <category term="日常碎碎念" scheme="https://yanghaku.github.io/categories/%E6%97%A5%E5%B8%B8%E7%A2%8E%E7%A2%8E%E5%BF%B5/"/>
+      <category term="日常碎碎念" scheme="https:/http://39.96.80.208/categories/%E6%97%A5%E5%B8%B8%E7%A2%8E%E7%A2%8E%E5%BF%B5/"/>
     
     
   </entry>
   
   <entry>
     <title>2019东北地区四省赛</title>
-    <link href="https://yanghaku.github.io/2019/05/22/2019%E4%B8%9C%E5%8C%97%E5%9C%B0%E5%8C%BA%E5%9B%9B%E7%9C%81%E8%B5%9B/"/>
-    <id>https://yanghaku.github.io/2019/05/22/2019%E4%B8%9C%E5%8C%97%E5%9C%B0%E5%8C%BA%E5%9B%9B%E7%9C%81%E8%B5%9B/</id>
+    <link href="2019/05/22/2019%E4%B8%9C%E5%8C%97%E5%9C%B0%E5%8C%BA%E5%9B%9B%E7%9C%81%E8%B5%9B/"/>
+    <id>2019/05/22/2019%E4%B8%9C%E5%8C%97%E5%9C%B0%E5%8C%BA%E5%9B%9B%E7%9C%81%E8%B5%9B/</id>
     <published>2019-05-22T06:00:00.000Z</published>
     <updated>2019-06-04T13:31:37.000Z</updated>
     
@@ -442,17 +468,17 @@
     </summary>
     
     
-      <category term="现场赛の补题" scheme="https://yanghaku.github.io/categories/%E7%8E%B0%E5%9C%BA%E8%B5%9B%E3%81%AE%E8%A1%A5%E9%A2%98/"/>
+      <category term="现场赛の补题" scheme="https:/http://39.96.80.208/categories/%E7%8E%B0%E5%9C%BA%E8%B5%9B%E3%81%AE%E8%A1%A5%E9%A2%98/"/>
     
     
-      <category term="codeforces" scheme="https://yanghaku.github.io/tags/codeforces/"/>
+      <category term="codeforces" scheme="https:/http://39.96.80.208/tags/codeforces/"/>
     
   </entry>
   
   <entry>
     <title>2018-2019 ICPC, NEERC, Southern Subregional Contest </title>
-    <link href="https://yanghaku.github.io/2019/05/20/2018-2019-ICPC-NEERC-Southern-Subregional-Contest/"/>
-    <id>https://yanghaku.github.io/2019/05/20/2018-2019-ICPC-NEERC-Southern-Subregional-Contest/</id>
+    <link href="2019/05/20/2018-2019-ICPC-NEERC-Southern-Subregional-Contest/"/>
+    <id>2019/05/20/2018-2019-ICPC-NEERC-Southern-Subregional-Contest/</id>
     <published>2019-05-20T00:54:00.000Z</published>
     <updated>2020-01-29T02:25:45.829Z</updated>
     
@@ -467,17 +493,17 @@
     </summary>
     
     
-      <category term="平时训练の补题" scheme="https://yanghaku.github.io/categories/%E5%B9%B3%E6%97%B6%E8%AE%AD%E7%BB%83%E3%81%AE%E8%A1%A5%E9%A2%98/"/>
+      <category term="平时训练の补题" scheme="https:/http://39.96.80.208/categories/%E5%B9%B3%E6%97%B6%E8%AE%AD%E7%BB%83%E3%81%AE%E8%A1%A5%E9%A2%98/"/>
     
     
-      <category term="codeforces" scheme="https://yanghaku.github.io/tags/codeforces/"/>
+      <category term="codeforces" scheme="https:/http://39.96.80.208/tags/codeforces/"/>
     
   </entry>
   
   <entry>
     <title>my first blog</title>
-    <link href="https://yanghaku.github.io/2019/05/20/my-first-blog/"/>
-    <id>https://yanghaku.github.io/2019/05/20/my-first-blog/</id>
+    <link href="2019/05/20/my-first-blog/"/>
+    <id>2019/05/20/my-first-blog/</id>
     <published>2019-05-20T00:30:00.000Z</published>
     <updated>2019-05-20T00:52:33.000Z</updated>
     

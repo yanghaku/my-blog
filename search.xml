@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>C# 高级特征</title>
+    <url>/2020/02/27/cs%E9%AB%98%E7%BA%A7%E7%89%B9%E5%BE%81/</url>
+    <content><![CDATA[<h2 id="委托（Delegate）"><a href="#委托（Delegate）" class="headerlink" title="委托（Delegate）"></a>委托（Delegate）</h2><h2 id="匿名（Anonymous）"><a href="#匿名（Anonymous）" class="headerlink" title="匿名（Anonymous）"></a>匿名（Anonymous）</h2><h2 id="事件（Event）"><a href="#事件（Event）" class="headerlink" title="事件（Event）"></a>事件（Event）</h2><h2 id="Lambda"><a href="#Lambda" class="headerlink" title="Lambda"></a>Lambda</h2><h2 id="Extension"><a href="#Extension" class="headerlink" title="Extension"></a>Extension</h2><h2 id="Thread"><a href="#Thread" class="headerlink" title="Thread"></a>Thread</h2><h2 id="Interface"><a href="#Interface" class="headerlink" title="Interface"></a>Interface</h2><h2 id="Reflection"><a href="#Reflection" class="headerlink" title="Reflection"></a>Reflection</h2><h2 id="Socket"><a href="#Socket" class="headerlink" title="Socket"></a>Socket</h2>]]></content>
+      <categories>
+        <category>.NET学习</category>
+      </categories>
+      <tags>
+        <tag>.NET</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>C# 语言基础</title>
     <url>/2020/02/26/cs%E8%AF%AD%E8%A8%80%E5%9F%BA%E7%A1%80/</url>
     <content><![CDATA[<h2 id="程序结构"><a href="#程序结构" class="headerlink" title="程序结构"></a>程序结构</h2><p>Hello World!:<br><a id="more"></a></p>
@@ -1034,8 +1045,8 @@ Similarity(A,B) = \frac{\sum_{i\in A\cap B} TFIDF_A[i] * TFIDF_B[i] }{ \sqrt{\su
         <category>.NET学习</category>
       </categories>
       <tags>
-        <tag>Android</tag>
         <tag>.NET</tag>
+        <tag>Android</tag>
         <tag>Xamarin</tag>
       </tags>
   </entry>
@@ -1289,8 +1300,8 @@ Similarity(A,B) = \frac{\sum_{i\in A\cap B} TFIDF_A[i] * TFIDF_B[i] }{ \sqrt{\su
         <category>.NET学习</category>
       </categories>
       <tags>
-        <tag>Android</tag>
         <tag>.NET</tag>
+        <tag>Android</tag>
         <tag>Xamarin</tag>
         <tag>iOS</tag>
       </tags>
@@ -1369,9 +1380,9 @@ Similarity(A,B) = \frac{\sum_{i\in A\cap B} TFIDF_A[i] * TFIDF_B[i] }{ \sqrt{\su
       </categories>
       <tags>
         <tag>.NET</tag>
-        <tag>.NET Core</tag>
         <tag>.NET Framework</tag>
         <tag>Xamarin</tag>
+        <tag>.NET Core</tag>
       </tags>
   </entry>
   <entry>
